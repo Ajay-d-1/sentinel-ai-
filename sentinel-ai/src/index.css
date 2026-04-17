@@ -1,0 +1,134 @@
+:root {
+  /* =======================================
+     Sentinel AI Design System (Blue Team)
+     ======================================= */
+  
+  /* Deep Slate/Navy Backgrounds */
+  --bg-core: #090e17;       /* App root background */
+  --bg-panel: rgba(15, 23, 42, 0.65); /* Glass panel */
+  --bg-surface: rgba(30, 41, 59, 0.5); /* Inner surfaces */
+  --bg-surface-hover: rgba(51, 65, 85, 0.6);
+  --bg-border: rgba(56, 189, 248, 0.15); /* Soft blue border */
+
+  /* Typography */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Primary Accent: Cyber Blue */
+  --accent-cyan: #38bdf8;
+  --accent-cyan-glow: rgba(56, 189, 248, 0.3);
+  
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Severities */
+  --sev-critical-bg: rgba(225, 29, 72, 0.15);
+  --sev-critical-text: #fda4af;
+  --sev-critical-border: rgba(225, 29, 72, 0.4);
+
+  --sev-high-bg: rgba(234, 88, 12, 0.15);
+  --sev-high-text: #fdba74;
+  --sev-high-border: rgba(234, 88, 12, 0.4);
+
+  --sev-medium-bg: rgba(202, 138, 4, 0.15);
+  --sev-medium-text: #fde047;
+  --sev-medium-border: rgba(202, 138, 4, 0.4);
+
+  --sev-low-bg: rgba(71, 85, 105, 0.3);
+  --sev-low-text: #cbd5e1;
+  --sev-low-border: rgba(71, 85, 105, 0.6);
+
+  --sev-benign-bg: rgba(20, 184, 166, 0.15);
+  --sev-benign-text: #5eead4;
+  --sev-benign-border: rgba(20, 184, 166, 0.4);
+
+  /* Glassmorphism utility */
+  --glass-blur: blur(12px);
+}
+
+/* Base Body Styles */
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  background-color: var(--bg-core);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  background-attachment: fixed;
+  overflow: hidden;
+}
+
+/* Clean Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+/* Animations */
+@keyframes cyber-pulse {
+  0% { box-shadow: 0 0 0 0 var(--accent-cyan-glow); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes slide-down-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 1px) }
+  40% { transform: translate(-1px, -1px) }
+  60% { transform: translate(2px, 1px) }
+  80% { transform: translate(1px, -1px) }
+  100% { transform: translate(0) }
+}
+
+/* Red Team Specific Base (for Judge.html) */
+body.red-team {
+  background-color: #050101;
+  color: #ff3333;
+  font-family: var(--font-mono);
+  background-image: 
+    linear-gradient(rgba(255, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+body.red-team ::-webkit-scrollbar-thumb {
+  background: #aa0000;
+  border-radius: 0;
+}
+body.red-team ::-webkit-scrollbar-thumb:hover {
+  background: #ff0000;
+}

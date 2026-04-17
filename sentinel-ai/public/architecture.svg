@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" style="background:#020902">
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="20" font-weight="bold">SENTINEL AI — System Architecture</text>
+  
+  <!-- Signal Sources Layer -->
+  <rect x="50" y="80" width="300" height="120" fill="#030a03" stroke="#0d2b0d" stroke-width="2" rx="8"/>
+  <text x="200" y="105" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="12" font-weight="bold">SIGNAL SOURCES</text>
+  
+  <rect x="70" y="120" width="80" height="60" fill="#050f05" stroke="#1a3a1a" rx="4"/>
+  <text x="110" y="140" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="10">Network</text>
+  <text x="110" y="155" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="9">Logs</text>
+  <text x="110" y="170" text-anchor="middle" fill="#facc15" font-family="monospace" font-size="8">T1046</text>
+  
+  <rect x="160" y="120" width="80" height="60" fill="#050f05" stroke="#1a3a1a" rx="4"/>
+  <text x="200" y="140" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="10">Endpoint</text>
+  <text x="200" y="155" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="9">EDR</text>
+  <text x="200" y="170" text-anchor="middle" fill="#f97316" font-family="monospace" font-size="8">T1059</text>
+  
+  <rect x="250" y="120" width="80" height="60" fill="#050f05" stroke="#1a3a1a" rx="4"/>
+  <text x="290" y="140" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="10">Application</text>
+  <text x="290" y="155" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="9">API Logs</text>
+  <text x="290" y="170" text-anchor="middle" fill="#facc15" font-family="monospace" font-size="8">T1110</text>
+  
+  <!-- Arrow: Sources → Supabase -->
+  <path d="M 350 140 L 420 140" stroke="#1a3a1a" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1a3a1a"/>
+    </marker>
+  </defs>
+  
+  <!-- Supabase Layer -->
+  <rect x="420" y="80" width="200" height="120" fill="#0a1a0a" stroke="#00ff41" stroke-width="2" rx="8"/>
+  <text x="520" y="105" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="12" font-weight="bold">SUPABASE</text>
+  <text x="520" y="125" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10">Postgres + Realtime</text>
+  
+  <rect x="440" y="140" width="50" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="465" y="160" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">attacks</text>
+  
+  <rect x="500" y="140" width="50" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="525" y="160" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">incidents</text>
+  
+  <rect x="560" y="140" width="50" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="585" y="160" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">audit_log</text>
+  
+  <!-- Arrow: Supabase → Correlation -->
+  <path d="M 620 140 L 680 140" stroke="#1a3a1a" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Correlation Engine -->
+  <rect x="680" y="80" width="160" height="120" fill="#050f05" stroke="#facc15" stroke-width="2" rx="8"/>
+  <text x="760" y="105" text-anchor="middle" fill="#facc15" font-family="monospace" font-size="12" font-weight="bold">CORRELATION</text>
+  <text x="760" y="125" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10">5-Stage Kill Chain</text>
+  
+  <rect x="700" y="140" width="120" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="760" y="158" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">RECON → EXFIL</text>
+  <text x="760" y="172" text-anchor="middle" fill="#facc15" font-family="monospace" font-size="8">T1046 → T1041</text>
+  
+  <!-- Arrow: Correlation → AI -->
+  <path d="M 840 140 L 900 140" stroke="#1a3a1a" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- AI Layer -->
+  <rect x="900" y="80" width="240" height="120" fill="#0a1a0a" stroke="#00ff41" stroke-width="2" rx="8"/>
+  <text x="1020" y="105" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="12" font-weight="bold">AI ANALYSIS — Samantha</text>
+  <text x="1020" y="125" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10">Groq LLM (llama-3.3-70b)</text>
+  
+  <rect x="920" y="140" width="100" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="970" y="158" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">Analyst Mode</text>
+  <text x="970" y="172" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="8">Technical</text>
+  
+  <rect x="1030" y="140" width="100" height="40" fill="#030a03" stroke="#1a3a1a" rx="3"/>
+  <text x="1080" y="158" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">CEO Mode</text>
+  <text x="1080" y="172" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="8">Executive</text>
+  
+  <!-- Arrow: AI → Dashboard -->
+  <path d="M 1020 200 L 1020 260" stroke="#1a3a1a" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Dashboard Layer -->
+  <rect x="300" y="280" width="840" height="280" fill="#050f05" stroke="#0d2b0d" stroke-width="2" rx="8"/>
+  <text x="720" y="305" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="14" font-weight="bold">SOC DASHBOARD v3.1</text>
+  
+  <!-- Dashboard Components -->
+  <rect x="320" y="330" width="200" height="210" fill="#030a03" stroke="#1a3a1a" rx="4"/>
+  <text x="420" y="350" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10" font-weight="bold">KILL CHAIN</text>
+  <rect x="340" y="370" width="40" height="30" fill="#050f05" stroke="#6b7280" rx="2"/>
+  <rect x="385" y="370" width="40" height="30" fill="#050f05" stroke="#facc15" rx="2"/>
+  <rect x="430" y="370" width="40" height="30" fill="#050f05" stroke="#f97316" rx="2"/>
+  <rect x="475" y="370" width="40" height="30" fill="#050f05" stroke="#ef4444" rx="2"/>
+  <text x="420" y="430" text-anchor="middle" fill="#1a4a1a" font-family="monospace" font-size="9">5-Stage Progress</text>
+  
+  <rect x="540" y="330" width="280" height="100" fill="#030a03" stroke="#1a3a1a" rx="4"/>
+  <text x="680" y="350" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10" font-weight="bold">SAMANTHA AI STREAM</text>
+  <text x="680" y="380" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">Real-time threat analysis</text>
+  <text x="680" y="400" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="8">CEO / Analyst Mode Toggle</text>
+  
+  <rect x="540" y="440" width="280" height="100" fill="#030a03" stroke="#1a3a1a" rx="4"/>
+  <text x="680" y="460" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10" font-weight="bold">INCIDENT FEED</text>
+  <rect x="560" y="480" width="240" height="40" fill="#050f05" stroke="#0d2b0d" rx="2"/>
+  <text x="680" y="500" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">Realtime Updates • Supabase</text>
+  <text x="680" y="520" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="8">SUBSCRIBED ●</text>
+  
+  <rect x="840" y="330" width="280" height="100" fill="#030a03" stroke="#1a3a1a" rx="4"/>
+  <text x="980" y="350" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10" font-weight="bold">DECISION PANEL</text>
+  <rect x="860" y="370" width="70" height="40" fill="#0a1a0a" stroke="#00ff41" rx="2"/>
+  <text x="895" y="390" text-anchor="middle" fill="#00ff41" font-family="monospace" font-size="8">ISOLATE</text>
+  <rect x="945" y="370" width="70" height="40" fill="#0a1a0a" stroke="#facc15" rx="2"/>
+  <text x="980" y="390" text-anchor="middle" fill="#facc15" font-family="monospace" font-size="8">ESCALATE</text>
+  <rect x="1030" y="370" width="70" height="40" fill="#0a1a0a" stroke="#ef4444" rx="2"/>
+  <text x="1065" y="390" text-anchor="middle" fill="#ef4444" font-family="monospace" font-size="8">DISMISS</text>
+  
+  <rect x="840" y="440" width="280" height="100" fill="#030a03" stroke="#1a3a1a" rx="4"/>
+  <text x="980" y="460" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="10" font-weight="bold">RESPONSE PLAYBOOK</text>
+  <text x="980" y="490" text-anchor="middle" fill="#c8f7c8" font-family="monospace" font-size="9">Dynamic steps per threat</text>
+  <text x="980" y="510" text-anchor="middle" fill="#2a6b2a" font-family="monospace" font-size="8">Checklist with progress</text>
+  
+  <!-- Legend -->
+  <rect x="50" y="530" width="1090" height="40" fill="#030a03" stroke="#0d2b0d" rx="4"/>
+  <text x="70" y="555" fill="#2a6b2a" font-family="monospace" font-size="10">MITRE ATT&CK: T1046 (Discovery) | T1110 (Credential Access) | T1059.001 (Execution) | T1021 (Lateral Movement) | T1041 (Exfiltration)</text>
+  
+  <!-- Data Flow Label -->
+  <text x="600" y="265" text-anchor="middle" fill="#1a4a1a" font-family="monospace" font-size="10">← Realtime WebSocket Connection →</text>
+</svg>
