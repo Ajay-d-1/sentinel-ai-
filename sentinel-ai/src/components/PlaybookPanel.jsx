@@ -193,7 +193,7 @@ export default function PlaybookPanel({ incident }) {
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {isCustomThreat && (
             <button
-              onClick={handleAIGenerate}
+              onClick={generateAIPlaybook}
               disabled={generating}
               style={{
                 padding: "6px 10px",

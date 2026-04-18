@@ -11,13 +11,13 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
   
   <style>
-    /* RED TEAM OFFENSIVE THEME */
+    /* PREMIUM CYBERPUNK THEME */
     :root {
-      --blood: #ff1a1a;
-      --blood-glow: rgba(255, 26, 26, 0.4);
-      --dark-blood: #800000;
-      --abyss: #050101;
-      --slate: #1a0a0a;
+      --blood: #00f0ff; /* Neon Cyan */
+      --blood-glow: rgba(0, 240, 255, 0.5);
+      --dark-blood: #8b5cf6; /* Electric Purple */
+      --abyss: #030014;
+      --slate: rgba(15, 23, 42, 0.6);
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -33,9 +33,11 @@
       align-items: center;
       padding: 2rem 1rem;
       background-image: 
-        linear-gradient(rgba(255, 26, 26, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 26, 26, 0.03) 1px, transparent 1px);
-      background-size: 20px 20px;
+        radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.15), transparent 25%),
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
       overflow-x: hidden;
     }
 
@@ -48,7 +50,7 @@
       left: 0;
       bottom: 0;
       right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 240, 255, 0.04), rgba(139, 92, 246, 0.02), rgba(0, 240, 255, 0.04));
       z-index: 999;
       background-size: 100% 2px, 3px 100%;
       pointer-events: none;
@@ -56,66 +58,71 @@
 
     @keyframes glitch {
       0% { transform: translate(0) }
-      20% { transform: translate(-2px, 1px) }
+      20% { transform: translate(-1px, 1px) }
       40% { transform: translate(-1px, -1px) }
-      60% { transform: translate(2px, 1px) }
+      60% { transform: translate(1px, 1px) }
       80% { transform: translate(1px, -1px) }
       100% { transform: translate(0) }
     }
 
     .glitch-hover:hover {
-      animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
+      animation: glitch 0.25s cubic-bezier(.25, .46, .45, .94) both infinite;
+      text-shadow: 2px 2px var(--dark-blood), -2px -2px #ff00ea;
     }
 
     .header-box {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       position: relative;
     }
 
     .logo-text {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 800;
       letter-spacing: 0.3em;
       color: #fff;
-      text-shadow: 0 0 15px var(--blood);
+      text-shadow: 0 0 20px var(--blood), 0 0 40px var(--dark-blood);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .logo-dot {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       background: var(--blood);
-      box-shadow: 0 0 15px var(--blood);
+      box-shadow: 0 0 20px var(--blood), 0 0 40px var(--blood);
       display: inline-block;
-      margin-right: 15px;
-      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* diamond shape */
-      animation: pulse 1s infinite alternate;
+      margin-right: 18px;
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+      animation: pulse 1.5s infinite alternate;
     }
 
     @keyframes pulse {
-      from { opacity: 0.4; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1.1); box-shadow: 0 0 20px var(--blood); }
+      from { opacity: 0.6; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1.15); box-shadow: 0 0 30px var(--blood); }
     }
 
     .subtitle {
       font-size: 11px;
-      color: #ff8080;
-      letter-spacing: 0.2em;
-      margin-top: 8px;
+      color: #a78bfa;
+      letter-spacing: 0.3em;
+      margin-top: 10px;
       text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
     }
 
     /* Terminal Window Style */
     .card {
-      background: rgba(10, 2, 2, 0.85);
-      border: 1px solid var(--dark-blood);
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.05), inset 0 0 10px rgba(255, 0, 0, 0.05);
+      background: var(--slate);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.1), inset 0 0 20px rgba(139, 92, 246, 0.1);
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       position: relative;
+      border-radius: 4px;
     }
 
     /* Crosshairs corners */
@@ -130,90 +137,95 @@
 
     .tabs {
       display: flex;
-      border-bottom: 1px solid var(--dark-blood);
-      background: #000;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
     }
 
     .tab {
       flex: 1;
-      padding: 14px 10px;
+      padding: 16px 10px;
       text-align: center;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.15em;
       cursor: pointer;
-      color: #aa0000;
-      transition: all 0.2s;
+      color: #6b7280;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
 
     .tab:hover {
       color: var(--blood);
-      background: rgba(255, 0, 0, 0.1);
+      background: rgba(0, 240, 255, 0.05);
     }
 
     .tab.active {
       color: #fff;
-      background: var(--dark-blood);
+      background: rgba(139, 92, 246, 0.2);
       box-shadow: inset 0 2px 0 var(--blood);
+      text-shadow: 0 0 10px var(--blood);
     }
 
     .panel-content {
-      padding: 2rem;
+      padding: 2.5rem;
     }
 
     .scenario-panel { display: none; }
-    .scenario-panel.active { display: block; animation: fade-in 0.3s ease-out; }
+    .scenario-panel.active { display: block; animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-    @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     label {
       display: block;
       font-size: 10px;
       color: var(--blood);
-      letter-spacing: 0.2em;
-      margin-bottom: 8px;
+      letter-spacing: 0.25em;
+      margin-bottom: 10px;
       font-weight: 700;
       text-transform: uppercase;
+      text-shadow: 0 0 5px var(--blood-glow);
     }
 
     input, select {
       width: 100%;
-      background: #000;
-      border: 1px solid var(--dark-blood);
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(139, 92, 246, 0.4);
       color: #fff;
       font-family: var(--font-mono);
       font-size: 14px;
-      padding: 12px;
-      margin-bottom: 20px;
+      padding: 14px;
+      margin-bottom: 24px;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.3s ease;
+      border-radius: 2px;
     }
 
     input:focus, select:focus {
       border-color: var(--blood);
-      box-shadow: 0 0 10px var(--blood-glow);
+      background: rgba(0, 240, 255, 0.05);
+      box-shadow: 0 0 15px var(--blood-glow);
     }
 
-    input::placeholder { color: #550000; }
+    input::placeholder { color: #4b5563; }
     
-    select option { background: #050101; color: var(--blood); }
+    select option { background: #030014; color: var(--blood); }
 
     .btn {
       width: 100%;
-      padding: 16px;
-      background: #0a0101;
+      padding: 18px;
+      background: rgba(139, 92, 246, 0.1);
       border: 1px solid var(--blood);
       color: var(--blood);
       font-family: var(--font-mono);
       font-size: 14px;
       font-weight: 800;
-      letter-spacing: 0.25em;
+      letter-spacing: 0.3em;
       cursor: pointer;
       text-transform: uppercase;
       position: relative;
       overflow: hidden;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 2px;
     }
 
     .btn::before {
@@ -221,96 +233,103 @@
       position: absolute;
       top: 0; left: -100%;
       width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,26,26,0.2), transparent);
-      transition: 0.5s;
+      background: linear-gradient(90deg, transparent, rgba(0,240,255,0.2), transparent);
+      transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .btn:hover::before { left: 100%; }
 
     .btn:hover:not(:disabled) {
-      background: var(--dark-blood);
+      background: rgba(0, 240, 255, 0.2);
       color: #fff;
-      box-shadow: 0 0 15px var(--blood-glow);
+      box-shadow: 0 0 20px var(--blood-glow), inset 0 0 10px rgba(0,240,255,0.5);
+      border-color: #fff;
     }
 
     .btn.execute-btn {
-      background: #1a0000;
-      color: #ff3333;
-      border: 2px solid #ff3333;
+      background: rgba(139, 92, 246, 0.15);
+      color: #fff;
+      border: 2px solid var(--dark-blood);
+      text-shadow: 0 0 10px var(--dark-blood);
     }
     .btn.execute-btn:hover:not(:disabled) {
-      background: #ff3333;
-      color: #000;
+      background: var(--dark-blood);
+      color: #fff;
+      border-color: #fff;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
     }
 
-    .btn:disabled { opacity: 0.5; border-style: dashed; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.3; border-style: dashed; cursor: not-allowed; }
 
-    .custom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .custom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
     .result-terminal {
-      margin-top: 20px;
-      background: #000;
-      border: 1px dashed var(--dark-blood);
-      padding: 15px;
-      font-size: 12px;
-      color: #888;
+      margin-top: 24px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px dashed rgba(0, 240, 255, 0.3);
+      padding: 16px;
+      font-size: 13px;
+      color: #94a3b8;
       display: none;
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
+      border-radius: 2px;
     }
     
     .result-terminal.visible { display: block; }
     
-    .line-success { color: #00ff00; }
-    .line-error { color: #ff0000; }
-    .line-info { color: #aaaaaa; }
-    .line-info::before { content: "> "; color: var(--blood); }
+    .line-success { color: #00ff41; text-shadow: 0 0 10px rgba(0, 255, 65, 0.4); }
+    .line-error { color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+    .line-info { color: #cbd5e1; }
+    .line-info::before { content: ">> "; color: var(--blood); }
 
     .layer-cb {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     
     input[type="checkbox"] {
       appearance: none;
-      width: 16px;
-      height: 16px;
-      background: #000;
+      width: 18px;
+      height: 18px;
+      background: rgba(0, 0, 0, 0.5);
       border: 1px solid var(--blood);
       cursor: pointer;
       position: relative;
       margin: 0;
+      transition: all 0.2s;
     }
-    input[type="checkbox"]:checked { background: var(--blood); }
+    input[type="checkbox"]:checked { background: var(--blood); box-shadow: 0 0 10px var(--blood-glow); }
     input[type="checkbox"]:checked::after {
-      content: '✗';
+      content: '█';
       position: absolute;
-      top: -2px; left: 2px;
+      top: -1px; left: 3px;
       color: #000;
-      font-size: 14px;
-      font-weight: bold;
+      font-size: 12px;
     }
 
-    .layer-label { font-size: 12px; color: #ff8080; cursor: pointer; text-transform: uppercase; }
+    .layer-label { font-size: 12px; color: #a78bfa; cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; }
 
     .progress-track {
-      height: 4px;
-      background: #1a0000;
-      margin-top: 15px;
+      height: 6px;
+      background: rgba(15, 23, 42, 0.8);
+      margin-top: 20px;
       display: none;
       position: relative;
+      border-radius: 3px;
+      overflow: hidden;
     }
     .progress-track.visible { display: block; }
     .progress-fill {
       height: 100%;
-      background: var(--blood);
+      background: linear-gradient(90deg, var(--dark-blood), var(--blood));
       width: 0%;
-      transition: width 0.3s linear;
-      box-shadow: 0 0 10px var(--blood);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 15px var(--blood);
     }
-    .divider { border-top: 1px dashed #330000; margin: 24px 0; }
-    .footer-stats { display: flex; justify-content: space-between; font-size: 10px; color: #660000; }
+    .divider { border-top: 1px dashed rgba(139, 92, 246, 0.3); margin: 30px 0; }
+    .footer-stats { display: flex; justify-content: space-between; font-size: 11px; color: rgba(139, 92, 246, 0.7); font-weight: 700; letter-spacing: 0.1em; }
   </style>
 </head>
 <body class="red-team">
@@ -355,96 +374,30 @@
         <div class="result-terminal" id="status-box"></div>
       </div>
 
-      <!-- 2. DIRECT INJECT -->
+      <!-- 2. DIRECT INJECT (Simplified) -->
       <div id="custom-panel" class="scenario-panel">
         <label>OPERATOR ID</label>
         <input id="custom-judge" type="text" placeholder="Enter handle..." maxlength="40" />
 
-        <div class="custom-grid">
-          <div>
-            <label>VECTOR_TYPE</label>
-            <select id="custom-threat">
-              <optgroup label="Access">
-                <option value="BRUTE_FORCE">Brute Force</option>
-                <option value="PHISHING">Phishing</option>
-                <option value="SQL_INJECTION">SQL Injection</option>
-              </optgroup>
-              <optgroup label="Execution">
-                <option value="MALWARE_EXECUTION">Malware Execution</option>
-                <option value="ZERO_DAY_EXPLOIT">Zero-Day Target</option>
-                <option value="PRIVILEGE_ESCALATION">Privilege Escalation</option>
-              </optgroup>
-              <optgroup label="Network">
-                <option value="PORT_SCAN">Port Scan</option>
-                <option value="C2_BEACONING">C2 Beaconing</option>
-                <option value="DNS_TUNNELING">DNS Tunneling</option>
-                <option value="LATERAL_MOVEMENT">Lateral Movement</option>
-                <option value="DATA_EXFILTRATION">Exfiltration</option>
-              </optgroup>
-              <optgroup label="Evasion">
-                <option value="CUSTOM">Custom Hex (Below)</option>
-              </optgroup>
-            </select>
-          </div>
-          <div>
-            <label>EXEC_STAGE</label>
-            <select id="custom-stage">
-              <option value="RECON">0x0_Recon</option>
-              <option value="INITIAL_ACCESS">0x1_Init_Access</option>
-              <option value="EXECUTION">0x2_Execution</option>
-              <option value="LATERAL_MOVEMENT">0x3_Lateral</option>
-              <option value="EXFILTRATION">0x4_Exfil</option>
-            </select>
-          </div>
-          <div>
-            <label>SEVERITY_TIER</label>
-            <select id="custom-severity">
-              <option value="LOW">Tier 3 (Low)</option>
-              <option value="MEDIUM">Tier 2 (Medium)</option>
-              <option value="HIGH" selected>Tier 1 (High)</option>
-              <option value="CRITICAL">Tier 0 (Critical)</option>
-            </select>
-          </div>
-          <div>
-            <label>EVASION_CONFIDENCE_RATING</label>
-            <input id="custom-confidence" type="number" min="1" max="100" value="85" />
-          </div>
-        </div>
-
-        <label>CUSTOM_SIGNATURE (Optional)</label>
-        <input id="custom-threat-name" type="text" placeholder="e.g., KINETIC_DROPPER" />
-
-        <label>MITRE_ATT&CK_MAP (Optional)</label>
-        <input id="custom-mitre" type="text" placeholder="e.g., T1041" value="" />
-
-        <label>TARGET_LAYERS</label>
-        <div style="display:flex;gap:20px;margin-bottom:24px;">
-          <label class="layer-cb">
-            <input type="checkbox" id="layer-network" checked> 
-            <span class="layer-label">Network</span>
-          </label>
-          <label class="layer-cb">
-            <input type="checkbox" id="layer-endpoint" checked> 
-            <span class="layer-label">Endpoint</span>
-          </label>
-          <label class="layer-cb">
-            <input type="checkbox" id="layer-application"> 
-            <span class="layer-label">Application</span>
-          </label>
-        </div>
-
-        <label>GENERATE_DECOY (False Positive Simulation)</label>
-        <select id="custom-fp" style="margin-bottom:12px;">
-          <option value="false">0 // Live Weaponized Threat</option>
-          <option value="true">1 // Inject Decoy Signature</option>
+        <label>ATTACK_VECTOR</label>
+        <select id="custom-threat">
+          <option value="BRUTE_FORCE">Brute Force Attack</option>
+          <option value="SQL_INJECTION">SQL Injection</option>
+          <option value="MALWARE_EXECUTION">Malware Execution</option>
+          <option value="DATA_EXFILTRATION">Data Exfiltration</option>
+          <option value="C2_BEACONING">C2 Beaconing</option>
+          <option value="PHISHING">Phishing Campaign</option>
         </select>
 
-        <div id="fp-reason-wrap" style="display:none;">
-          <label>DECOY_MASKING_REASON</label>
-          <input id="custom-fp-reason" type="text" placeholder="e.g., Scheduled sync script" />
-        </div>
+        <label>SEVERITY_TIER</label>
+        <select id="custom-severity">
+          <option value="LOW">Tier 3 (Low)</option>
+          <option value="MEDIUM">Tier 2 (Medium)</option>
+          <option value="HIGH" selected>Tier 1 (High)</option>
+          <option value="CRITICAL">Tier 0 (Critical)</option>
+        </select>
 
-        <button class="btn execute-btn glitch-hover" onclick="launchCustom()">TRANSMIT_DATAGRAM()</button>
+        <button class="btn execute-btn glitch-hover" onclick="launchCustom()" style="margin-top:12px;">INJECT_THREAT()</button>
         <div id="custom-result" class="result-terminal"></div>
       </div>
 
@@ -486,14 +439,9 @@
       document.getElementById('clock').textContent = new Date().toISOString().substring(11, 19) + ' UTC'
     }, 1000)
 
-    document.getElementById('custom-fp').addEventListener('change', function() {
-      document.getElementById('fp-reason-wrap').style.display = this.value === 'true' ? 'block' : 'none'
-    })
-
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
       document.querySelectorAll('.scenario-panel').forEach(p => p.classList.remove('active'))
-      
       const tabs = ['preset', 'custom', 'burst']
       const idx = tabs.indexOf(tab)
       document.querySelectorAll('.tab')[idx].classList.add('active')
@@ -562,7 +510,7 @@
         delays: [0, 6000, 12000, 18000],
       },
     }
-    
+
     function logToTerminal(id, text, type = 'info') {
       const el = document.getElementById(id);
       el.classList.add('visible');
@@ -591,7 +539,6 @@
       logToTerminal('status-box', `[SYSTEM] Deploying scenario: ${scenario.name}`, 'info')
 
       const attackId = crypto.randomUUID()
-      // Optional attacks table
       await db.from('attacks').insert({ id: attackId, device_id: 'c2-framework' }).then(()=>{}).catch(()=>{})
 
       if (scenario.fp) {
@@ -602,11 +549,8 @@
       for (let i = 0; i < scenario.stages.length; i++) {
         setTimeout(async () => {
           document.getElementById('progress-bar').style.width = `${((i+1)/scenario.stages.length)*100}%`
-
           const mitre = MITRE_MAP[scenario.stages[i].threat_type] || {}
           logToTerminal('status-box', `[${scenario.stages[i].stage}] Transmitting payload: ${scenario.stages[i].threat_type}`, 'info')
-          
-          // Force UTC timestamp
           const nowUTC = new Date().toISOString()
 
           const { error } = await db.from('incidents').insert({
@@ -632,8 +576,8 @@
           if (i === scenario.stages.length - 1) {
             setTimeout(() => {
               btn.textContent = 'PAYLOAD_DELIVERED'
-              btn.style.color = '#00ff00'
-              btn.style.borderColor = '#00ff00'
+              btn.style.color = '#00ff41'
+              btn.style.borderColor = '#00ff41'
               logToTerminal('status-box', `[SYSTEM] Attack sequence complete. Terminating uplink.`, 'success')
               setTimeout(() => {
                 btn.disabled = false
@@ -647,58 +591,56 @@
       }
     }
 
+    // Auto-mapping: threat type -> kill chain stage, confidence, layers
+    const THREAT_DEFAULTS = {
+      BRUTE_FORCE:       { stage: 'INITIAL_ACCESS', confidence: 87, layers: ['network','application'] },
+      SQL_INJECTION:     { stage: 'INITIAL_ACCESS', confidence: 82, layers: ['application','network'] },
+      MALWARE_EXECUTION: { stage: 'EXECUTION',      confidence: 93, layers: ['endpoint','network'] },
+      DATA_EXFILTRATION: { stage: 'EXFILTRATION',   confidence: 91, layers: ['network','endpoint','application'] },
+      C2_BEACONING:      { stage: 'LATERAL_MOVEMENT', confidence: 88, layers: ['network','endpoint'] },
+      PHISHING:          { stage: 'INITIAL_ACCESS', confidence: 78, layers: ['application'] },
+    }
+
     async function launchCustom() {
       const btn = document.querySelector('#custom-panel .btn')
       btn.disabled = true
-      btn.textContent = 'TRANSMITTING...'
+      btn.textContent = 'INJECTING...'
       
-      let threatType = document.getElementById('custom-threat').value
-      const customName = document.getElementById('custom-threat-name').value.trim()
-      if (customName) threatType = customName.toUpperCase().replace(/\s+/g, '_')
-
-      const stage = document.getElementById('custom-stage').value
+      const threatType = document.getElementById('custom-threat').value
       const severity = document.getElementById('custom-severity').value
-      const confidence = parseInt(document.getElementById('custom-confidence').value) || 85
-      const isFP = document.getElementById('custom-fp').value === 'true'
-      const fpReason = document.getElementById('custom-fp-reason')?.value || ''
-      const customMitre = document.getElementById('custom-mitre').value.trim()
-      
-      const layers = []
-      if (document.getElementById('layer-network').checked) layers.push('network')
-      if (document.getElementById('layer-endpoint').checked) layers.push('endpoint')
-      if (document.getElementById('layer-application').checked) layers.push('application')
-
+      const defaults = THREAT_DEFAULTS[threatType] || { stage: 'EXECUTION', confidence: 85, layers: ['network'] }
       const mitre = MITRE_MAP[threatType] || {}
       const attackId = crypto.randomUUID()
 
-      logToTerminal('custom-result', `[INIT] Preparing ${threatType} datagram...`, 'info')
+      await db.from('attacks').insert({ id: attackId, device_id: 'c2-framework' }).then(()=>{}).catch(()=>{})
+
+      logToTerminal('custom-result', `[INIT] Preparing ${threatType} payload...`, 'info')
 
       const nowUTC = new Date().toISOString()
       const incident = {
         attack_id: attackId,
-        stage: stage,
+        stage: defaults.stage,
         threat_type: threatType,
         severity: severity,
-        confidence: Math.min(100, Math.max(1, confidence)),
-        mitre_technique: customMitre || mitre.technique || '',
+        confidence: defaults.confidence + Math.floor(Math.random() * 8) - 4,
+        mitre_technique: mitre.technique || '',
         mitre_tactic: mitre.tactic || '',
-        is_false_positive: isFP,
-        false_positive_reason: isFP ? (fpReason || 'Decoy signature deployed') : null,
-        correlated: layers.length > 1,
-        layers_involved: layers.length > 0 ? layers : ['network'],
+        is_false_positive: false,
+        correlated: defaults.layers.length > 1,
+        layers_involved: defaults.layers,
         created_at: nowUTC
       }
 
       const { error } = await db.from('incidents').insert(incident)
 
       if (error) {
-        logToTerminal('custom-result', `[ERR] Transmit failed: ${error.message}`, 'error')
+        logToTerminal('custom-result', `[ERR] Inject failed: ${error.message}`, 'error')
       } else {
-        logToTerminal('custom-result', `[SUCCESS] Datagram injected to target framework.`, 'success')
+        logToTerminal('custom-result', `[SUCCESS] ${threatType} injected. Dashboard updated.`, 'success')
       }
 
       btn.disabled = false
-      btn.textContent = 'TRANSMIT_DATAGRAM()'
+      btn.textContent = 'INJECT_THREAT()'
     }
 
     async function launchBurst() {
@@ -715,6 +657,7 @@
       const stages = ['RECON', 'INITIAL_ACCESS', 'EXECUTION', 'LATERAL_MOVEMENT', 'EXFILTRATION']
       const severities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
       const attackId = crypto.randomUUID()
+      await db.from('attacks').insert({ id: attackId, device_id: 'c2-framework' }).then(()=>{}).catch(()=>{})
       
       const delayMs = Math.max(2, 1000 / rate)
       let sent = 0

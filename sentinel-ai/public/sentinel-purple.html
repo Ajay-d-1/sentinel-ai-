@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENTINEL AI — Purple Team Operations Platform</title>
+  <meta name="description"
+    content="Sentinel AI Purple Team — Unified Red Team attack + Blue Team defense platform with real HTTP probes and AI-powered analysis.">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --green: #00ff41;
+      --green-dim: #00cc33;
+      --green-glow: rgba(0, 255, 65, 0.12);
+      --red: #ff3333;
+      --red-glow: rgba(255, 51, 51, 0.15);
+      --orange: #ff8800;
+      --yellow: #ffcc00;
+      --blue: #4488ff;
+      --cyan: #00ddff;
+      --muted: #444;
+      --text: #ccc;
+      --text-dim: #666;
+      --surface: #111;
+      --surface2: #161616;
+      --border: #1a1a1a;
+    }
+
+    html {
+      font-size: 13px
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', Consolas, monospace;
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #222;
+      border-radius: 3px
+    }
+
+    /* ═══ NAVBAR ═══ */
+    #nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    #nav .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 1.5s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    #nav .brand b {
+      font-size: 15px;
+      color: #fff;
+      letter-spacing: 2px
+    }
+
+    #nav .brand span {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 1px
+    }
+
+    .pills {
+      display: flex;
+      gap: 8px
+    }
+
+    .pill {
+      font-size: 10px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      letter-spacing: 1px;
+      color: var(--text-dim)
+    }
+
+    .pill.active {
+      border-color: var(--green);
+      color: var(--green)
+    }
+
+    .pill.red {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    #nav .right {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    #clock {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 70px;
+      text-align: right
+    }
+
+    .ai-status {
+      font-size: 9px;
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 65, .3);
+      padding: 3px 8px;
+      border-radius: 3px;
+      letter-spacing: 1px
+    }
+
+    /* ═══ MAIN GRID ═══ */
+    #main {
+      display: grid;
+      grid-template-columns: 30% 40% 30%;
+      height: calc(100vh - 56px);
+      overflow: hidden
+    }
+
+    /* ═══ PANELS ═══ */
+    .panel {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    .panel:last-child {
+      border-right: none
+    }
+
+    .panel-hdr {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0
+    }
+
+    .panel-hdr h2 {
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--green);
+      font-weight: 700;
+      margin-bottom: 2px
+    }
+
+    .panel-hdr .sub {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: .5px
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px
+    }
+
+    /* ═══ FORM CONTROLS ═══ */
+    .field {
+      margin-bottom: 12px
+    }
+
+    .field label {
+      display: block;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+      text-transform: uppercase
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 10px;
+      outline: none;
+      border-radius: 2px
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--green-dim);
+      box-shadow: 0 0 6px var(--green-glow)
+    }
+
+    .field select option {
+      background: var(--bg)
+    }
+
+    /* ═══ MODE TOGGLE ═══ */
+    .mode-toggle {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      transition: all .2s
+    }
+
+    .mode-btn.active {
+      background: var(--green);
+      color: #000;
+      font-weight: 700
+    }
+
+    .mode-btn.active.red-mode {
+      background: var(--red)
+    }
+
+    /* ═══ BIG BUTTON ═══ */
+    .big-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all .2s;
+      margin-bottom: 12px
+    }
+
+    .big-btn:hover:not(:disabled) {
+      background: var(--red);
+      color: #000;
+      box-shadow: 0 0 20px var(--red-glow)
+    }
+
+    .big-btn:disabled {
+      opacity: .3;
+      cursor: not-allowed
+    }
+
+    .big-btn.scanning {
+      animation: btnPulse 1s infinite
+    }
+
+    @keyframes btnPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 5px var(--red-glow)
+      }
+
+      50% {
+        box-shadow: 0 0 20px var(--red-glow)
+      }
+    }
+
+    /* ═══ ATTACK LOG ═══ */
+    #attackLog {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.7;
+      padding: 8px 10px;
+      background: #050505;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      min-height: 200px
+    }
+
+    .log-line {
+      animation: logIn .2s ease-out
+    }
+
+    @keyframes logIn {
+      from {
+        opacity: 0;
+        transform: translateX(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    .l-time {
+      color: var(--muted)
+    }
+
+    .l-cyan {
+      color: var(--cyan)
+    }
+
+    .l-green {
+      color: var(--green)
+    }
+
+    .l-red {
+      color: var(--red);
+      font-weight: 700
+    }
+
+    .l-yellow {
+      color: var(--yellow)
+    }
+
+    .l-dim {
+      color: var(--text-dim)
+    }
+
+    /* ═══ SAMANTHA PANEL ═══ */
+    .sam-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .sam-bar .left {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .sam-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green)
+    }
+
+    .sam-bar .name {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 700;
+      letter-spacing: 1px
+    }
+
+    .sam-bar .ver {
+      font-size: 9px;
+      color: var(--text-dim)
+    }
+
+    .mode-sw {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .mode-sw button {
+      padding: 4px 10px;
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-weight: 700;
+      transition: all .2s
+    }
+
+    .mode-sw button.active {
+      background: var(--green);
+      color: #000
+    }
+
+    /* ═══ VISUAL ANALYSIS ═══ */
+    .sam-visual {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #080808;
+      flex-shrink: 0;
+      display: none
+    }
+
+    .sam-visual.show {
+      display: block
+    }
+
+    .vis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .vis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px
+    }
+
+    .vis-card .vis-label {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+      font-weight: 700
+    }
+
+    /* Severity Gauge */
+    .gauge-wrap {
+      position: relative;
+      width: 100%;
+      height: 38px
+    }
+
+    .gauge-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      margin-top: 8px
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .6s ease
+    }
+
+    .gauge-marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 20px;
+      background: #fff;
+      transition: left .6s ease
+    }
+
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 7px;
+      color: var(--text-dim);
+      margin-top: 3px;
+      letter-spacing: .5px
+    }
+
+    .gauge-val {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px
+    }
+
+    /* Kill Chain Visual */
+    .kc-stages {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 30px
+    }
+
+    .kc-bar {
+      flex: 1;
+      border-radius: 2px 2px 0 0;
+      transition: all .4s ease;
+      min-width: 0
+    }
+
+    .kc-labels {
+      display: flex;
+      gap: 2px;
+      margin-top: 2px
+    }
+
+    .kc-labels span {
+      flex: 1;
+      font-size: 6px;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: .5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    /* Confidence Ring */
+    .conf-ring {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      margin: 0 auto
+    }
+
+    .conf-ring svg {
+      transform: rotate(-90deg)
+    }
+
+    .conf-ring .conf-val {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff
+    }
+
+    /* Threat Type Badge */
+    .threat-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0
+    }
+
+    .threat-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0
+    }
+
+    .threat-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2
+    }
+
+    .threat-mitre {
+      font-size: 8px;
+      color: var(--text-dim)
+    }
+
+    /* Layer Indicators */
+    .layers-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px
+    }
+
+    .layer-tag {
+      font-size: 7px;
+      padding: 1px 5px;
+      border-radius: 2px;
+      letter-spacing: .5px;
+      font-weight: 700
+    }
+
+    #samOutput {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--green);
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px
+    }
+
+    .sam-cursor::after {
+      content: '▋';
+      color: var(--green);
+      animation: blink .7s infinite
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    /* ═══ STATS BAR ═══ */
+    .stats-bar {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface)
+    }
+
+    .stat {
+      flex: 1;
+      text-align: center;
+      padding: 6px 4px;
+      border-right: 1px solid var(--border)
+    }
+
+    .stat:last-child {
+      border-right: none
+    }
+
+    .stat .k {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 1px
+    }
+
+    .stat .v {
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      margin-top: 2px
+    }
+
+    /* ═══ INCIDENT FEED ═══ */
+    .inc-card {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .15s;
+      border-left: 3px solid transparent
+    }
+
+    .inc-card:hover {
+      background: var(--surface2)
+    }
+
+    .inc-card.selected {
+      background: var(--surface2)
+    }
+
+    .inc-card.sev-CRITICAL {
+      border-left-color: var(--red)
+    }
+
+    .inc-card.sev-HIGH {
+      border-left-color: var(--orange)
+    }
+
+    .inc-card.sev-MEDIUM {
+      border-left-color: var(--yellow)
+    }
+
+    .inc-card.sev-LOW {
+      border-left-color: var(--blue)
+    }
+
+    .inc-sev {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      display: inline-block
+    }
+
+    .sev-CRITICAL {
+      color: var(--red);
+      background: rgba(255, 51, 51, .1);
+      border: 1px solid rgba(255, 51, 51, .3)
+    }
+
+    .sev-HIGH {
+      color: var(--orange);
+      background: rgba(255, 136, 0, .1);
+      border: 1px solid rgba(255, 136, 0, .3)
+    }
+
+    .sev-MEDIUM {
+      color: var(--yellow);
+      background: rgba(255, 204, 0, .1);
+      border: 1px solid rgba(255, 204, 0, .3)
+    }
+
+    .sev-LOW {
+      color: var(--blue);
+      background: rgba(68, 136, 255, .1);
+      border: 1px solid rgba(68, 136, 255, .3)
+    }
+
+    .inc-title {
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      margin: 4px 0 2px
+    }
+
+    .inc-meta {
+      font-size: 9px;
+      color: var(--text-dim)
+    }
+
+    /* ═══ RIGHT PANEL SECTIONS ═══ */
+    .section {
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .section-hdr {
+      padding: 8px 12px;
+      background: var(--surface);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .section-body {
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.6
+    }
+
+    .w5-row {
+      margin-bottom: 6px
+    }
+
+    .w5-label {
+      color: var(--green-dim);
+      font-weight: 700;
+      display: inline;
+      min-width: 55px
+    }
+
+    .w5-val {
+      color: var(--text)
+    }
+
+    .evidence-tag {
+      font-size: 8px;
+      color: var(--yellow);
+      background: rgba(255, 204, 0, .08);
+      border: 1px solid rgba(255, 204, 0, .2);
+      padding: 1px 5px;
+      border-radius: 2px;
+      margin-left: 6px;
+      cursor: pointer
+    }
+
+    .evidence-block {
+      margin-top: 4px;
+      padding: 6px 8px;
+      background: #080808;
+      border: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 100px;
+      overflow-y: auto;
+      display: none
+    }
+
+    .evidence-block.show {
+      display: block
+    }
+
+    /* ═══ PLAYBOOK ═══ */
+    .pb-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 11px;
+      cursor: pointer
+    }
+
+    .pb-check {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--muted);
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      transition: all .2s
+    }
+
+    .pb-check.done {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000
+    }
+
+    .pb-progress {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 8px 0
+    }
+
+    .pb-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 2px;
+      transition: width .3s
+    }
+
+    /* ═══ IMPACT BOX ═══ */
+    .impact-box {
+      border: 1px solid var(--red);
+      border-radius: 2px;
+      padding: 12px;
+      background: rgba(255, 51, 51, .03)
+    }
+
+    .impact-cost {
+      font-size: 20px;
+      color: var(--red);
+      font-weight: 700;
+      margin: 6px 0
+    }
+
+    .impact-note {
+      font-size: 10px;
+      color: var(--text-dim);
+      line-height: 1.5
+    }
+
+    /* ═══ VERIFY ═══ */
+    .verify-toggle {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 2px
+    }
+
+    .verify-toggle:hover {
+      border-color: var(--green-dim);
+      color: var(--green)
+    }
+
+    #verifyPanel {
+      display: none;
+      margin-top: 8px
+    }
+
+    #verifyPanel.show {
+      display: block
+    }
+
+    .verify-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #080808;
+      border: 1px solid var(--border);
+      border-radius: 2px
+    }
+
+    .verify-item summary {
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--green-dim);
+      font-weight: 700;
+      letter-spacing: 1px
+    }
+
+    .verify-item pre {
+      margin-top: 4px;
+      font-size: 9px;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 120px;
+      overflow-y: auto
+    }
+
+    .verify-item a {
+      color: var(--cyan);
+      font-size: 9px
+    }
+
+    /* ═══ EXEC SUMMARY ═══ */
+    #execSummary {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .85);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center
+    }
+
+    #execSummary.show {
+      display: flex
+    }
+
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--green);
+      box-shadow: 0 0 30px var(--green-glow);
+      max-width: 600px;
+      width: 90%;
+      border-radius: 4px;
+      padding: 24px;
+      max-height: 90vh;
+      overflow-y: auto
+    }
+
+    .summary-box h2 {
+      font-size: 14px;
+      color: var(--green);
+      letter-spacing: 2px;
+      margin-bottom: 16px
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .summary-row .k {
+      color: var(--text-dim)
+    }
+
+    .summary-row .v {
+      color: #fff;
+      font-weight: 700
+    }
+
+    .sev-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+      font-size: 11px
+    }
+
+    .sev-bar .block {
+      height: 12px;
+      border-radius: 1px
+    }
+
+    .summary-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px
+    }
+
+    .summary-btns button,
+    .summary-btns a {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s
+    }
+
+    /* ═══ BOTTOM BANNER ═══ */
+    #bottomBanner {
+      padding: 8px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
+      position: sticky;
+      bottom: 0;
+      z-index: 50
+    }
+
+    #bottomBanner .live {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    #bottomBanner a {
+      color: var(--green);
+      text-decoration: none;
+      border: 1px solid var(--green);
+      padding: 4px 12px;
+      border-radius: 2px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transition: all .2s
+    }
+
+    #bottomBanner a:hover {
+      background: var(--green);
+      color: #000
+    }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width:1000px) {
+      #main {
+        grid-template-columns: 1fr;
+        height: auto
+      }
+
+      .panel {
+        min-height: 50vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border)
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ NAVBAR ═══ -->
+  <div id="nav">
+    <div class="brand">
+      <div class="pulse"></div>
+      <div><b>SENTINEL AI</b><br><span>PURPLE TEAM OPERATIONS PLATFORM v3.1</span></div>
+    </div>
+    <div class="pills">
+      <div class="pill red" id="pillRed">RED TEAM: READY</div>
+      <div class="pill active" id="pillBlue">BLUE TEAM: ACTIVE</div>
+      <div class="pill" id="pillSam">SAMANTHA: STANDBY</div>
+    </div>
+    <div class="right">
+      <div class="ai-status">◆ GROQ AI CONNECTED</div>
+      <div id="clock">00:00:00 UTC</div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN 3-COL GRID ═══ -->
+  <div id="main">
+
+    <!-- ═══ LEFT — RED TEAM ═══ -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>RED TEAM — ATTACK SURFACE SCANNER</h2>
+        <div class="sub">Real HTTP probes. Real server responses. Real evidence.</div>
+      </div>
+      <div class="panel-body">
+        <div class="field"><label>TARGET (must be a real URL)</label><input type="text" id="targetUrl"
+            value="http://testphp.vulnweb.com" placeholder="http://testphp.vulnweb.com"></div>
+        <div class="field"><label>OPERATOR NAME</label><input type="text" id="operatorName"
+            placeholder="Judge / Analyst name"></div>
+        <div class="mode-toggle">
+          <div class="mode-btn active" id="modeLive" onclick="setMode('live')">LIVE SCAN</div>
+          <div class="mode-btn" id="modeSim" onclick="setMode('sim')">SIMULATION</div>
+        </div>
+        <div id="simOptions" style="display:none">
+          <div class="field"><label>SCENARIO</label>
+            <select id="simSelect">
+              <option value="apt29">APT29 Advanced Persistent Threat</option>
+              <option value="ransomware">RANSOMWARE Encryption Attack</option>
+              <option value="insider">INSIDER THREAT Data Exfiltration</option>
+              <option value="c2beacon">C2 BEACON Command and Control</option>
+            </select>
+          </div>
+        </div>
+        <button class="big-btn" id="scanBtn" onclick="startOperation()">⚡ INITIATE RED TEAM OPERATION</button>
+        <div id="attackLog"></div>
+      </div>
+    </div>
+
+    <!-- ═══ MIDDLE — BLUE TEAM SOC ═══ -->
+    <div class="panel">
+      <div class="sam-bar">
+        <div class="left">
+          <div class="sam-avatar">S</div>
+          <div>
+            <div class="name">SAMANTHA</div>
+            <div class="ver">SENTINEL AI v3.1</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="mode-sw">
+            <button class="active" id="modeAnalyst" onclick="setSamMode('analyst')">SOC ENGINEER</button>
+            <button id="modeCeo" onclick="setSamMode('ceo')">INCIDENT CMDR</button>
+          </div>
+        </div>
+      </div>
+      <!-- VISUAL ANALYSIS DASHBOARD — shows SVG gauges, kill chain, confidence ring -->
+      <div class="sam-visual" id="samVisual">
+        <div class="vis-grid">
+          <!-- Severity Gauge -->
+          <div class="vis-card">
+            <div class="vis-label">SEVERITY LEVEL</div>
+            <div class="gauge-val" id="visGaugeSev" style="color:var(--text-dim)">—</div>
+            <div class="gauge-wrap">
+              <div class="gauge-bg">
+                <div class="gauge-fill" id="visGaugeFill" style="width:0%;background:var(--blue)"></div>
+              </div>
+            </div>
+            <div class="gauge-labels"><span>LOW</span><span>MEDIUM</span><span>HIGH</span><span>CRITICAL</span></div>
+          </div>
+          <!-- Confidence Ring -->
+          <div class="vis-card" style="text-align:center">
+            <div class="vis-label">CONFIDENCE</div>
+            <div class="conf-ring">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="20" fill="none" stroke="var(--border)" stroke-width="4" />
+                <circle id="visConfCircle" cx="25" cy="25" r="20" fill="none" stroke="var(--green)" stroke-width="4"
+                  stroke-dasharray="0 126" stroke-linecap="round" style="transition:stroke-dasharray .6s ease" />
+              </svg>
+              <div class="conf-val" id="visConfVal">—</div>
+            </div>
+          </div>
+          <!-- Kill Chain Visual -->
+          <div class="vis-card">
+            <div class="vis-label">KILL CHAIN STAGE</div>
+            <div class="kc-stages" id="visKillChain">
+              <div class="kc-bar" style="height:10%;background:var(--border)"></div>
+              <div class="kc-bar" style="height:10%;background:var(--border)"></div>
+              <div class="kc-bar" style="height:10%;background:var(--border)"></div>
+              <div class="kc-bar" style="height:10%;background:var(--border)"></div>
+              <div class="kc-bar" style="height:10%;background:var(--border)"></div>
+            </div>
+            <div class="kc-labels">
+              <span>RECON</span><span>ACCESS</span><span>EXEC</span><span>MOVE</span><span>EXFIL</span></div>
+          </div>
+          <!-- Threat Info -->
+          <div class="vis-card" id="visThreatCard">
+            <div class="vis-label">ACTIVE THREAT</div>
+            <div class="threat-badge">
+              <div class="threat-icon" id="visThreatIcon" style="background:rgba(255,51,51,.15);color:var(--red)">⚡
+              </div>
+              <div>
+                <div class="threat-name" id="visThreatName">—</div>
+                <div class="threat-mitre" id="visThreatMitre">—</div>
+              </div>
+            </div>
+            <div class="layers-row" id="visLayers"></div>
+          </div>
+        </div>
+      </div>
+      <div id="samOutput"><span style="color:var(--text-dim)">▶ Awaiting threat telemetry...<br>▶ Select an incident or
+          start a scan to begin analysis.</span></div>
+      <div class="stats-bar" id="statsBar">
+        <div class="stat">
+          <div class="k">THREATS</div>
+          <div class="v" id="statThreats">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">STAGE</div>
+          <div class="v" id="statStage">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">MITRE</div>
+          <div class="v" id="statMitre">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">CONFIDENCE</div>
+          <div class="v" id="statConf">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">SEVERITY</div>
+          <div class="v" id="statSev">—</div>
+        </div>
+      </div>
+      <div class="panel-hdr">
+        <h2>INCIDENT FEED</h2>
+      </div>
+      <div id="incidentFeed" style="flex:1;overflow-y:auto"></div>
+    </div>
+
+    <!-- ═══ RIGHT — RESPONSE CENTER ═══ -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>RESPONSE CENTER</h2>
+      </div>
+      <div class="panel-body" id="rightBody">
+        <!-- 5W Evidence -->
+        <div class="section" id="w5Section">
+          <div class="section-hdr">5W EVIDENCE PANEL</div>
+          <div class="section-body" id="w5Body"><span style="color:var(--text-dim)">Select an incident to view
+              evidence.</span></div>
+        </div>
+        <!-- Playbook -->
+        <div class="section" id="pbSection">
+          <div class="section-hdr">REMEDIATION PLAYBOOK</div>
+          <div class="section-body" id="pbBody"><span style="color:var(--text-dim)">Playbook generates per
+              incident.</span></div>
+        </div>
+        <!-- Impact -->
+        <div class="section" id="impactSection">
+          <div class="section-hdr">BUSINESS IMPACT ASSESSMENT</div>
+          <div class="section-body" id="impactBody"><span style="color:var(--text-dim)">Impact calculates per
+              incident.</span></div>
+        </div>
+        <!-- Verify -->
+        <button class="verify-toggle" onclick="toggleVerify()">▼ VERIFY EVIDENCE (Judge Access)</button>
+        <div id="verifyPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOTTOM BANNER ═══ -->
+  <div id="bottomBanner">
+    <div class="live">
+      <div class="pulse"></div> BLUE TEAM SOC RECEIVING ALL FINDINGS · Samantha analyzing · Playbooks generating
+    </div>
+    <a href="http://localhost:5174" target="_blank">OPEN BLUE TEAM DASHBOARD →</a>
+  </div>
+
+  <!-- ═══ EXEC SUMMARY MODAL ═══ -->
+  <div id="execSummary">
+    <div class="summary-box" id="summaryContent"></div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    //  CONFIGURATION — All credentials hardcoded
+    // ═══════════════════════════════════════════
+    const SUPABASE_URL = 'https://zsfypkypmuurmymctmeb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZnlwa3lwbXV1cm15bWN0bWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNjU2MjgsImV4cCI6MjA5MTc0MTYyOH0.9JUWA0ARSDGpFm9gi29hQPLx0PyEkxPswxKRxWtYAh4';
+    const CORS_PROXY = 'https://corsproxy.io/?url=';
+    const GROQ_MODEL = 'llama-3.3-70b-versatile';
+    // Groq API key hardcoded — no user input needed
+    const GROQ_KEY = "paste your key"
+
+    // ═══ State ═══
+    let mode = 'live'; // 'live' or 'sim'
+    let samMode = 'analyst'; // 'analyst' = SOC Engineer, 'ceo' = Incident Commander
+    let incidents = [];
+    let selectedIncident = null;
+    let verifyStore = {};
+    let scanStart = 0;
+    let playbookChecks = {};
+
+    // Kill chain stage mapping
+    const KC_STAGES = ['RECON', 'INITIAL_ACCESS', 'EXECUTION', 'LATERAL_MOVEMENT', 'EXFILTRATION'];
+    const KC_MAP = { RECON: 0, DISCOVERY: 0, INITIAL_ACCESS: 1, CREDENTIAL_ACCESS: 1, EXECUTION: 2, DEFENSE_EVASION: 2, COLLECTION: 2, LATERAL_MOVEMENT: 3, PERSISTENCE: 3, EXFILTRATION: 4, IMPACT: 4 };
+
+    // Threat icons
+    const THREAT_ICONS = { SQL_INJECTION: '💉', CROSS_SITE_SCRIPTING: '🔗', DATA_EXFILTRATION: '📤', MALWARE_EXECUTION: '🦠', LATERAL_MOVEMENT: '🕸️', C2_BEACONING: '📡', BRUTE_FORCE: '🔨', PHISHING: '🎣', RANSOMWARE_DROPPER: '🔒', PORT_SCAN: '🔍', EXPOSED_SERVER_INFO: '📋', SENSITIVE_FILE_EXPOSED: '📁', MISSING_SECURITY_HEADERS: '🛡️', CREDENTIAL_DUMP: '🔑', REGISTRY_PERSISTENCE: '⚙️', PROCESS_INJECTION: '💀', REMOTE_COMMAND: '⌨️', USB_EXFILTRATION: '💾', DATA_DESTRUCTION: '🗑️', SENSITIVE_FILE_ACCESS: '👁️' };
+
+    // ═══ Clock ═══
+    setInterval(() => { document.getElementById('clock').textContent = new Date().toISOString().slice(11, 19) + ' UTC' }, 1000);
+
+    // ═══════════════════════════════════════════
+    //  UTILITY FUNCTIONS
+    // ═══════════════════════════════════════════
+
+    /** Returns HH:MM:SS timestamp */
+    function ts() { return new Date().toTimeString().slice(0, 8) }
+
+    /** Logs a line to the attack log terminal */
+    function log(probe, msg, color = 'dim') {
+      const el = document.getElementById('attackLog');
+      const d = document.createElement('div');
+      d.className = 'log-line';
+      const cls = { 'cyan': 'l-cyan', 'green': 'l-green', 'red': 'l-red', 'yellow': 'l-yellow', 'dim': 'l-dim' }[color] || 'l-dim';
+      const icon = { 'cyan': '►', 'green': '✓', 'red': '✗', 'yellow': '⚠' }[color] || '·';
+      d.innerHTML = `<span class="l-time">[${ts()}]</span> <span class="${cls}">${icon} ${probe.padEnd(14)} ${msg}</span>`;
+      el.appendChild(d);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    /** Proxied fetch with error handling */
+    async function safeFetch(url) {
+      try { return await fetch(CORS_PROXY + encodeURIComponent(url)) }
+      catch (e) { return null }
+    }
+
+    /** Delay helper */
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    /** Mode toggle */
+    function setMode(m) {
+      mode = m;
+      document.getElementById('modeLive').className = 'mode-btn' + (m === 'live' ? ' active' : '');
+      document.getElementById('modeSim').className = 'mode-btn' + (m === 'sim' ? ' active red-mode' : '');
+      document.getElementById('simOptions').style.display = m === 'sim' ? 'block' : 'none';
+    }
+
+    /** Samantha mode toggle — SOC Engineer vs Incident Commander */
+    function setSamMode(m) {
+      samMode = m;
+      document.getElementById('modeAnalyst').className = m === 'analyst' ? 'active' : '';
+      document.getElementById('modeCeo').className = m === 'ceo' ? 'active' : '';
+      // Re-analyze current incident if one is selected
+      if (selectedIncident) analyzeSamantha(selectedIncident);
+    }
+
+    // ═══════════════════════════════════════════
+    //  VISUAL ANALYSIS — SVG gauges, kill chain, etc.
+    // ═══════════════════════════════════════════
+    function updateVisuals(inc) {
+      const panel = document.getElementById('samVisual');
+      panel.classList.add('show');
+
+      // — Severity Gauge —
+      const sevMap = { LOW: 25, MEDIUM: 50, HIGH: 75, CRITICAL: 100 };
+      const sevColor = { LOW: 'var(--blue)', MEDIUM: 'var(--yellow)', HIGH: 'var(--orange)', CRITICAL: 'var(--red)' };
+      const pct = sevMap[inc.severity] || 10;
+      document.getElementById('visGaugeSev').textContent = inc.severity;
+      document.getElementById('visGaugeSev').style.color = sevColor[inc.severity] || '#fff';
+      const fill = document.getElementById('visGaugeFill');
+      fill.style.width = pct + '%';
+      fill.style.background = sevColor[inc.severity] || 'var(--blue)';
+
+      // — Confidence Ring (SVG) —
+      const conf = inc.confidence || 0;
+      const circ = Math.round(126 * (conf / 100));
+      document.getElementById('visConfCircle').setAttribute('stroke-dasharray', circ + ' 126');
+      document.getElementById('visConfCircle').setAttribute('stroke', conf >= 90 ? 'var(--red)' : conf >= 70 ? 'var(--orange)' : conf >= 50 ? 'var(--yellow)' : 'var(--blue)');
+      document.getElementById('visConfVal').textContent = conf + '%';
+
+      // — Kill Chain Bar Chart —
+      const stageIdx = KC_MAP[inc.stage] ?? -1;
+      const bars = document.getElementById('visKillChain');
+      let barsHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const active = i <= stageIdx;
+        const isCurrent = i === stageIdx;
+        const h = active ? (20 + i * 16) : 10;
+        const c = isCurrent ? sevColor[inc.severity] || 'var(--green)' : active ? 'rgba(0,255,65,0.3)' : 'var(--border)';
+        barsHTML += `<div class="kc-bar" style="height:${h}px;background:${c};${isCurrent ? 'box-shadow:0 0 8px ' + c : ''}"></div>`;
+      }
+      bars.innerHTML = barsHTML;
+
+      // — Threat Info —
+      document.getElementById('visThreatName').textContent = inc.threat_type.replace(/_/g, ' ');
+      document.getElementById('visThreatMitre').textContent = `${inc.mitre_technique} · ${inc.mitre_tactic}`;
+      document.getElementById('visThreatIcon').textContent = THREAT_ICONS[inc.threat_type] || '⚡';
+      document.getElementById('visThreatIcon').style.background = sevColor[inc.severity] ? sevColor[inc.severity].replace('var(', 'rgba(').replace(')', ',.15)') : 'rgba(255,51,51,.15)';
+      // Rebuilt for proper rgba
+      const iconBg = { LOW: 'rgba(68,136,255,.15)', MEDIUM: 'rgba(255,204,0,.15)', HIGH: 'rgba(255,136,0,.15)', CRITICAL: 'rgba(255,51,51,.15)' }[inc.severity] || 'rgba(255,51,51,.15)';
+      const iconColor = { LOW: 'var(--blue)', MEDIUM: 'var(--yellow)', HIGH: 'var(--orange)', CRITICAL: 'var(--red)' }[inc.severity] || 'var(--red)';
+      document.getElementById('visThreatIcon').style.background = iconBg;
+      document.getElementById('visThreatIcon').style.color = iconColor;
+
+      // — Layer Tags —
+      const layers = inc.layers_involved || ['network'];
+      const layerColors = { network: 'rgba(0,221,255,.15)', application: 'rgba(0,255,65,.15)', endpoint: 'rgba(255,136,0,.15)', 'network': 'rgba(0,221,255,.15)' };
+      const layerTextColors = { network: 'var(--cyan)', application: 'var(--green)', endpoint: 'var(--orange)' };
+      let layerHTML = '';
+      layers.forEach(l => {
+        layerHTML += `<span class="layer-tag" style="background:${layerColors[l] || 'rgba(102,102,102,.15)'};color:${layerTextColors[l] || 'var(--text-dim)'};border:1px solid ${layerTextColors[l] || 'var(--muted)'}">${l.toUpperCase()}</span>`;
+      });
+      document.getElementById('visLayers').innerHTML = layerHTML;
+    }
+
+    // ═══════════════════════════════════════════
+    //  SUPABASE INSERT — writes to incidents table
+    // ═══════════════════════════════════════════
+    async function insertIncident(data) {
+      const payload = {
+        attack_id: null, stage: data.stage, threat_type: data.threat_type,
+        layers_involved: data.layers_involved || ['network'],
+        correlated: data.correlated || false, confidence: data.confidence,
+        severity: data.severity, mitre_technique: data.mitre_technique,
+        mitre_tactic: data.mitre_tactic,
+        narration_analyst: data.narration_analyst || '',
+        narration_ceo: data.narration_ceo || '',
+        is_false_positive: data.is_false_positive || false
+      };
+      try {
+        const res = await fetch(SUPABASE_URL + '/rest/v1/incidents', {
+          method: 'POST', headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Prefer': 'return=representation'
+          }, body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        log('SOC_FEED', `Incident → ${data.threat_type} [${data.severity}]`, 'green');
+        return Array.isArray(result) ? result[0] : result;
+      } catch (e) {
+        // Retry once
+        await wait(2000);
+        try {
+          const res = await fetch(SUPABASE_URL + '/rest/v1/incidents', {
+            method: 'POST', headers: {
+              'Content-Type': 'application/json', 'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=representation'
+            }, body: JSON.stringify(payload)
+          });
+          return (await res.json())[0] || {};
+        } catch (e2) {
+          log('SOC_FEED', '⚠ SOC sync pending — local mode active', 'yellow');
+          return payload;
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  INCIDENT CARD — adds to feed + local state
+    // ═══════════════════════════════════════════
+    function addIncidentCard(inc) {
+      incidents.unshift(inc);
+      document.getElementById('statThreats').textContent = incidents.length;
+      const feed = document.getElementById('incidentFeed');
+      const card = document.createElement('div');
+      card.className = `inc-card sev-${inc.severity}`;
+      card.innerHTML = `
+    <span class="inc-sev sev-${inc.severity}">${inc.severity}</span>
+    <div class="inc-title">${inc.threat_type}</div>
+    <div class="inc-meta">${inc.stage} · ${inc.mitre_technique} · ${inc.confidence}% · ${ts()}</div>`;
+      card.onclick = () => selectIncident(inc, card);
+      feed.prepend(card);
+      // Auto-select first incident
+      if (incidents.length === 1) selectIncident(inc, card);
+    }
+
+    // ═══════════════════════════════════════════
+    //  SELECT INCIDENT — loads into right panels + visuals
+    // ═══════════════════════════════════════════
+    function selectIncident(inc, cardEl) {
+      selectedIncident = inc;
+      // Highlight card
+      document.querySelectorAll('.inc-card').forEach(c => c.classList.remove('selected'));
+      if (cardEl) cardEl.classList.add('selected');
+      // Update stats
+      document.getElementById('statStage').textContent = inc.stage;
+      document.getElementById('statMitre').textContent = inc.mitre_technique;
+      document.getElementById('statConf').textContent = inc.confidence + '%';
+      const sevEl = document.getElementById('statSev');
+      sevEl.textContent = inc.severity;
+      sevEl.style.color = { 'CRITICAL': 'var(--red)', 'HIGH': 'var(--orange)', 'MEDIUM': 'var(--yellow)', 'LOW': 'var(--blue)' }[inc.severity] || '#fff';
+      // Update VISUAL analysis
+      updateVisuals(inc);
+      // Update 5W
+      render5W(inc);
+      // Update playbook
+      renderPlaybook(inc);
+      // Update impact
+      renderImpact(inc);
+      // Stream Samantha analysis
+      analyzeSamantha(inc);
+    }
+
+    // ═══════════════════════════════════════════
+    //  5W EVIDENCE PANEL
+    // ═══════════════════════════════════════════
+    function render5W(inc) {
+      const w = inc._5w || {};
+      const ev = inc._evidence || '';
+      const evId = 'ev_' + Math.random().toString(36).slice(2);
+      document.getElementById('w5Body').innerHTML = `
+    <div class="w5-row"><span class="w5-label">WHAT: </span><span class="w5-val">${w.what || inc.threat_type}</span></div>
+    <div class="w5-row"><span class="w5-label">WHERE: </span><span class="w5-val">${w.where || '—'}</span></div>
+    <div class="w5-row"><span class="w5-label">WHY: </span><span class="w5-val">${w.why || '—'}</span></div>
+    <div class="w5-row"><span class="w5-label">WHEN: </span><span class="w5-val">${w.when || ts()}</span></div>
+    <div class="w5-row"><span class="w5-label">WHO: </span><span class="w5-val">${w.who || 'External attacker'}</span></div>
+    <div class="w5-row"><span class="w5-label">IMPACT: </span><span class="w5-val">${w.impact || 'Under assessment'}</span></div>
+    ${ev ? `<div style="margin-top:8px"><span class="evidence-tag" onclick="document.getElementById('${evId}').classList.toggle('show')">EVIDENCE ▼</span><div class="evidence-block" id="${evId}">${esc(ev)}</div></div>` : ''}`;
+    }
+
+    function esc(s) { return String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+
+    // ═══════════════════════════════════════════
+    //  REMEDIATION PLAYBOOK
+    // ═══════════════════════════════════════════
+    const PLAYBOOKS = {
+      SQL_INJECTION: ['Block source IP at WAF immediately', 'Review database for unauthorized data access', 'Parameterize all SQL queries in affected endpoints', 'Rotate all database credentials', 'Scan for backdoor accounts or data modifications'],
+      CROSS_SITE_SCRIPTING: ['Implement Content-Security-Policy header', 'HTML-encode all user output in affected pages', 'Review session cookie flags (HttpOnly, Secure)', 'Scan for stored XSS in database content', 'Deploy WAF rule for XSS pattern detection'],
+      SENSITIVE_FILE_EXPOSED: ['Remove or restrict access to exposed files immediately', 'Audit server configuration for directory listing', 'Move sensitive files outside web root', 'Implement access controls on all admin paths', 'Rotate any exposed credentials or API keys'],
+      MISSING_SECURITY_HEADERS: ['Add Content-Security-Policy header', 'Enable Strict-Transport-Security (HSTS)', 'Set X-Frame-Options to DENY or SAMEORIGIN', 'Add X-Content-Type-Options: nosniff', 'Configure Referrer-Policy and Permissions-Policy'],
+      EXPOSED_SERVER_INFO: ['Remove Server and X-Powered-By headers', 'Update server software to latest stable version', 'Configure server to suppress version information', 'Enable automatic security updates', 'Review server hardening checklist'],
+      DATA_EXFILTRATION: ['Block egress traffic to C2 IP immediately', 'Preserve all logs and packet captures as evidence', 'Notify Data Protection Officer and Legal team', 'Engage Incident Response team for breach protocol', 'Assess data classification of exfiltrated files'],
+      MALWARE_EXECUTION: ['Isolate affected host from network immediately', 'Kill malicious process and capture memory dump', 'Create forensic disk image for analysis', 'Scan adjacent hosts for similar IOCs', 'Update endpoint detection rules with new signatures'],
+      BRUTE_FORCE: ['Lock affected accounts immediately', 'Block source IP at network perimeter', 'Force MFA re-enrollment for targeted accounts', 'Audit authentication logs for successful logins', 'Implement account lockout after 5 failed attempts'],
+      LATERAL_MOVEMENT: ['Segment network to contain lateral spread', 'Revoke all credentials from compromised hosts', 'Audit east-west traffic between segments', 'Deploy endpoint detection on all reachable hosts', 'Review SMB/RDP/WMI logs for unusual patterns'],
+      PORT_SCAN: ['Rate-limit source IP at perimeter firewall', 'Log all source IPs and scan patterns', 'Alert SOC team for continued monitoring', 'Correlate with endpoint logs for post-scan activity', 'Review firewall rules for unnecessary open ports'],
+      PHISHING: ['Quarantine phishing email across all mailboxes', 'Reset credentials of any user who clicked', 'Block phishing domain at proxy and DNS', 'Scan endpoints of affected users for payloads', 'Report phishing indicators to threat intel platform'],
+      C2_BEACONING: ['Block C2 domain/IP at DNS and firewall', 'Isolate compromised host from network', 'Hunt for additional beacons across all segments', 'Capture and analyze beacon traffic patterns', 'Check threat intel databases for C2 infrastructure'],
+      RANSOMWARE_DROPPER: ['Disconnect affected systems from network immediately', 'Identify ransomware variant from file signatures', 'Check for available decryption tools', 'Restore from clean verified backups', 'Report to law enforcement and regulatory bodies'],
+      DEFAULT: ['Review incident details and classification', 'Investigate affected systems', 'Contain threat to prevent spread', 'Collect and preserve forensic evidence', 'Document findings and remediation actions']
+    };
+
+    function renderPlaybook(inc) {
+      const steps = PLAYBOOKS[inc.threat_type] || PLAYBOOKS.DEFAULT;
+      const id = inc._id || inc.threat_type;
+      if (!playbookChecks[id]) playbookChecks[id] = new Set();
+      const checks = playbookChecks[id];
+      const pct = Math.round(checks.size / steps.length * 100);
+      let html = `<div class="pb-progress"><div class="pb-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:9px;color:var(--text-dim);margin-bottom:8px">REMEDIATION: ${pct}% COMPLETE</div>`;
+      steps.forEach((s, i) => {
+        const done = checks.has(i);
+        html += `<div class="pb-step" onclick="togglePB('${id}',${i})">
+      <div class="pb-check${done ? ' done' : ''}">${done ? '✓' : ''}</div>
+      <div><span style="color:var(--text-dim);font-size:9px">STEP ${i + 1}</span><br>${s}</div></div>`;
+      });
+      document.getElementById('pbBody').innerHTML = html;
+    }
+
+    function togglePB(id, idx) {
+      if (!playbookChecks[id]) playbookChecks[id] = new Set();
+      if (playbookChecks[id].has(idx)) playbookChecks[id].delete(idx);
+      else playbookChecks[id].add(idx);
+      if (selectedIncident) renderPlaybook(selectedIncident);
+    }
+
+    // ═══════════════════════════════════════════
+    //  BUSINESS IMPACT CALCULATOR
+    // ═══════════════════════════════════════════
+    const BREACH_COSTS = { CRITICAL: { min: 4.2, max: 9.4 }, HIGH: { min: 1.8, max: 4.2 }, MEDIUM: { min: 0.4, max: 1.8 }, LOW: { min: 0.1, max: 0.4 } };
+    const THREAT_CONTEXT = {
+      SQL_INJECTION: 'Full database compromise. All user records exposed. PII breach notification required under GDPR.',
+      DATA_EXFILTRATION: 'Customer data theft. GDPR Article 33 — 72hr notification mandatory. Regulatory fines: up to 4% annual revenue.',
+      MALWARE_EXECUTION: 'Active system compromise. Ransomware deployment likely within 24-72 hours.',
+      LATERAL_MOVEMENT: 'Network-wide compromise imminent. Containment cost multiplies per affected host.',
+      C2_BEACONING: 'Attacker has persistent access. Average dwell time before detection: 194 days.',
+      CROSS_SITE_SCRIPTING: 'All site visitors at risk. Session hijacking enables account takeover at scale.',
+      BRUTE_FORCE: 'Credential compromise imminent. 81% of breaches involve stolen credentials.',
+      RANSOMWARE_DROPPER: 'File encryption in progress. Average ransom demand 2024: $1.5M.',
+      PHISHING: 'Initial access established. Average cost of phishing breach: $4.76M.',
+      SENSITIVE_FILE_EXPOSED: 'Database credentials, source code, or backup data directly downloadable by anyone.',
+      EXPOSED_SERVER_INFO: 'Attackers can select exploits targeting the exact software version in use.',
+      MISSING_SECURITY_HEADERS: 'Enables XSS, clickjacking, and SSL stripping attacks against all users.',
+      PORT_SCAN: 'Attack surface mapped. Targeted intrusion attempts likely to follow within hours.',
+    };
+
+    function renderImpact(inc) {
+      const cost = BREACH_COSTS[inc.severity] || BREACH_COSTS.LOW;
+      const ctx = THREAT_CONTEXT[inc.threat_type] || 'Security incident detected. Immediate investigation required.';
+      document.getElementById('impactBody').innerHTML = `
+    <div class="impact-box">
+      <div style="font-size:9px;color:var(--text-dim);letter-spacing:1px">ESTIMATED BREACH COST RANGE</div>
+      <div class="impact-cost">$${cost.min}M — $${cost.max}M</div>
+      <div class="impact-note">Based on IBM Cost of Data Breach Report 2024<br><br>${ctx}<br><br><b style="color:var(--red)">Time to Act: NOW</b> — Every 60 min of delay adds ~$150K to cost.</div>
+    </div>`;
+    }
+
+    // ═══════════════════════════════════════════
+    //  VERIFY EVIDENCE PANEL
+    // ═══════════════════════════════════════════
+    function toggleVerify() {
+      document.getElementById('verifyPanel').classList.toggle('show');
+    }
+
+    function updateVerify() {
+      const panel = document.getElementById('verifyPanel');
+      let html = '';
+      for (const [key, data] of Object.entries(verifyStore)) {
+        html += `<details class="verify-item"><summary>${key}</summary>
+      <pre>${esc(data.evidence || '')}</pre>
+      ${data.url ? `<a href="${data.url}" target="_blank">OPEN IN BROWSER →</a>` : ''}
+      ${data.note ? `<div style="margin-top:4px;font-size:9px;color:var(--yellow)">${data.note}</div>` : ''}
+    </details>`;
+      }
+      if (!html) html = '<div style="font-size:10px;color:var(--text-dim);padding:8px">No findings yet. Start a scan.</div>';
+      panel.innerHTML = html;
+    }
+
+    // ═══════════════════════════════════════════
+    //  SAMANTHA AI — Groq streaming analysis
+    //  SOC Engineer mode = technical "find & fix"
+    //  Incident Commander mode = business decisions
+    // ═══════════════════════════════════════════
+    function buildSamanthaPrompt(inc, m) {
+      const ev = inc._evidence || 'N/A';
+      const base = `Target: ${inc._target || 'testphp.vulnweb.com'}
+Threat: ${inc.threat_type}
+Stage: ${inc.stage}
+Severity: ${inc.severity}
+Confidence: ${inc.confidence}%
+MITRE: ${inc.mitre_technique} — ${inc.mitre_tactic}
+Layers: ${(inc.layers_involved || []).join(', ')}
+Evidence: ${ev}`;
+      if (m === 'analyst') {
+        return {
+          system: `You are Samantha, elite SOC Engineer AI. Your job is to find vulnerabilities and tell engineers exactly how to fix them.
+Analyze this security incident using the ACTUAL evidence provided. Be specific — reference the exact evidence data.
+Format:
+🔍 FINDING: What happened (technical, 2 sentences)
+⚙️ ROOT CAUSE: Why this vulnerability exists (1 sentence)
+🔧 FIX: Exact fix the developer/sysadmin must apply (specific code, config, or command — 2 sentences max)
+⏱️ PRIORITY: How urgent and what to do first (1 sentence)
+Maximum 6 sentences total. No generic advice. Every sentence must reference real evidence.`, user: base
+        };
+      } else {
+        return {
+          system: `You are Samantha, Incident Commander AI. Your job is to coordinate the response team and protect the business.
+Translate this security incident into actionable decisions. Who needs to do what, right now.
+Format:
+🚨 SITUATION: What is happening in plain English (1 sentence)
+👥 ASSIGN: Which team/person handles this and what they do (be specific — "Network team blocks IP X", "DevOps patches endpoint Y")
+💼 BUSINESS RISK: What is at risk (data, money, reputation — be specific with numbers)
+📋 NEXT 60 MIN: Exact sequence of actions in the next hour
+Never use jargon. Maximum 5 sentences. Every action must name a responsible person or team.`, user: base
+        };
+      }
+    }
+
+    /** Streams Groq response word by word into Samantha panel */
+    async function analyzeSamantha(inc) {
+      const key = GROQ_KEY;
+      const out = document.getElementById('samOutput');
+      const prompt = buildSamanthaPrompt(inc, samMode);
+
+      // Update pill status
+      document.getElementById('pillSam').className = 'pill active';
+      document.getElementById('pillSam').textContent = 'SAMANTHA: ANALYZING';
+
+      if (!key) {
+        // No API key — use narration fallback
+        out.innerHTML = '';
+        const fallback = samMode === 'analyst' ? (inc.narration_analyst || 'Analysis requires Groq API key.') : (inc.narration_ceo || 'Incident briefing requires Groq API key.');
+        let i = 0;
+        const typeWriter = () => {
+          if (i < fallback.length) { out.textContent += fallback[i]; i++; out.scrollTop = out.scrollHeight; setTimeout(typeWriter, 15) }
+          else { document.getElementById('pillSam').textContent = 'SAMANTHA: ONLINE'; document.getElementById('pillSam').className = 'pill active' }
+        };
+        typeWriter();
+        return;
+      }
+
+      out.innerHTML = '<span class="sam-cursor"></span>';
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: GROQ_MODEL, stream: true, max_tokens: 250, temperature: 0.3,
+            messages: [{ role: 'system', content: prompt.system }, { role: 'user', content: prompt.user }]
+          })
+        });
+        if (!res.ok) {
+          const fallback = samMode === 'analyst' ? (inc.narration_analyst || 'AI analysis unavailable.') : (inc.narration_ceo || 'Incident briefing unavailable.');
+          out.textContent = fallback;
+          document.getElementById('pillSam').textContent = 'SAMANTHA: ONLINE';
+          return;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        out.innerHTML = '';
+        let full = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const lines = decoder.decode(value, { stream: true }).split('\n');
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const d = line.slice(6).trim();
+            if (d === '[DONE]') break;
+            try { const t = JSON.parse(d).choices?.[0]?.delta?.content; if (t) { full += t; out.textContent = full; out.scrollTop = out.scrollHeight } } catch { }
+          }
+        }
+      } catch (e) {
+        const fallback = samMode === 'analyst' ? (inc.narration_analyst || '') : (inc.narration_ceo || '');
+        out.textContent = fallback || 'Connection error — review incident data manually.';
+      }
+      document.getElementById('pillSam').textContent = 'SAMANTHA: ONLINE';
+      document.getElementById('pillSam').className = 'pill active';
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROBE 1 — RECON (T1592)
+    // ═══════════════════════════════════════════
+    async function probeRecon(target) {
+      log('RECON', 'Fingerprinting target...', 'cyan');
+      const start = Date.now();
+      const res = await safeFetch(target);
+      const rt = Date.now() - start;
+      if (!res) { log('RECON', 'Network restriction — CORS blocked', 'yellow'); return null }
+      const server = res.headers.get('server') || 'Unknown';
+      const powered = res.headers.get('x-powered-by') || '';
+      const info = [server, powered].filter(Boolean).join(' · ');
+      log('RECON', `${res.status} in ${rt}ms — ${info}`, 'green');
+
+      // Store headers for verify
+      const hdrs = []; res.headers.forEach((v, k) => hdrs.push(k + ': ' + v));
+      verifyStore['SERVER_HEADERS'] = { evidence: hdrs.join('\n'), url: target };
+
+      let outdated = false;
+      const lc = (server + ' ' + powered).toLowerCase();
+      if (/php\/[3-6]\./i.test(lc)) outdated = true;
+      if (/apache\/2\.(0|2|4\.([0-4][^0-9]|[0-4]$|50\b))/i.test(lc)) outdated = true;
+      if (powered) outdated = true;
+
+      if (outdated) log('RECON', `⚠ OUTDATED — ${info}`, 'yellow');
+
+      const inc = {
+        stage: 'RECON', threat_type: 'EXPOSED_SERVER_INFO', severity: outdated ? 'MEDIUM' : 'LOW', confidence: 78,
+        mitre_technique: 'T1592', mitre_tactic: 'Reconnaissance', layers_involved: ['network'],
+        narration_analyst: `Server banner reveals ${info}. Version fingerprinting enables targeted exploit selection. Response: ${rt}ms. T1592.`,
+        narration_ceo: 'The server is advertising its software version publicly. Attackers know exactly which vulnerabilities to target.',
+        _5w: { what: 'Server version fingerprinting', where: 'HTTP response headers', why: 'Server advertises software version publicly', when: ts(), who: 'Any internet scanner (automated bots)', impact: 'Attackers select exploits targeting exact version' },
+        _evidence: `Server: ${info}\nResponse time: ${rt}ms\nHeaders:\n${hdrs.join('\n')}`, _target: target
+      };
+      const result = await insertIncident(inc);
+      inc._id = result?.id || 'recon';
+      addIncidentCard(inc);
+      return { info, hdrs };
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROBE 2 — SQL INJECTION (T1190)
+    // ═══════════════════════════════════════════
+    async function probeSQLi(target) {
+      log('SQL_INJECT', 'Preparing injection payloads...', 'cyan');
+      const payloads = [
+        { path: "/search.php?searchFor=test%27%20OR%20%271%27%3D%271", label: "searchFor OR" },
+        { path: "/listproducts.php?cat=1%27", label: "listproducts cat" },
+        { path: "/artists.php?artist=1%27", label: "artists param" }
+      ];
+      const patterns = ['mysql', 'sql syntax', 'warning:', 'error in your sql', 'ora-', 'pg_query', 'mysql_fetch', 'unclosed quotation', 'mysql_num_rows'];
+
+      // Baseline
+      log('SQL_INJECT', 'Fetching baseline...', 'cyan');
+      const baseRes = await safeFetch(target + '/search.php?searchFor=test');
+      let baseLen = 0;
+      if (baseRes) { baseLen = (await baseRes.text()).length }
+
+      let found = false, evidence = '', vulnUrl = '', vulnEndpoint = '';
+      for (const p of payloads) {
+        const url = target + p.path;
+        log('SQL_INJECT', `Probing ${p.label}...`, 'cyan');
+        const res = await safeFetch(url);
+        if (!res) { log('SQL_INJECT', `No response for ${p.label}`, 'yellow'); continue }
+        const text = await res.text();
+        const lower = text.toLowerCase();
+        for (const pat of patterns) {
+          if (lower.includes(pat)) {
+            found = true; vulnUrl = url; vulnEndpoint = p.path;
+            const idx = lower.indexOf(pat);
+            evidence = text.slice(Math.max(0, idx - 80), Math.min(text.length, idx + pat.length + 80)).trim();
+            log('SQL_INJECT', `${pat} detected in response ██ CRITICAL`, 'red');
+            break;
+          }
+        }
+        if (found) break;
+        if (baseLen > 0 && text.length > baseLen * 1.5) {
+          log('SQL_INJECT', `Response size anomaly: ${text.length} vs baseline ${baseLen}`, 'yellow');
+        }
+      }
+
+      if (found) {
+        verifyStore['SQL_INJECTION'] = { evidence: `Vulnerable URL: ${vulnUrl}\n\nError found in response:\n${evidence}`, url: vulnUrl };
+        const inc = {
+          stage: 'INITIAL_ACCESS', threat_type: 'SQL_INJECTION', severity: 'CRITICAL', confidence: 94,
+          mitre_technique: 'T1190', mitre_tactic: 'Initial Access', layers_involved: ['application'], correlated: true,
+          narration_analyst: 'SQL injection confirmed. Error-based SQLi — database engine errors visible in response. Full schema extraction possible. T1190.',
+          narration_ceo: 'An attacker can steal your entire customer database using a single crafted URL. No login needed.',
+          _5w: { what: 'SQL injection via unsanitized input parameter', where: vulnEndpoint, why: 'User input concatenated directly into SQL query', when: ts(), who: 'Any attacker with a browser', impact: 'Full database extraction, authentication bypass. Affects all users.' },
+          _evidence: `Vulnerable endpoint: ${vulnEndpoint}\nSQL error in response: ${evidence}`, _target: target
+        };
+        const result = await insertIncident(inc); inc._id = result?.id || 'sqli';
+        addIncidentCard(inc);
+      } else { log('SQL_INJECT', 'No SQL injection detected', 'green') }
+      return found;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROBE 3 — XSS (T1059.007)
+    // ═══════════════════════════════════════════
+    async function probeXSS(target) {
+      log('XSS', 'Preparing XSS payloads...', 'cyan');
+      // Build payloads safely to avoid closing our own script tag
+      const scriptPayload = '<scr' + 'ipt>alert("SENTINEL")<\/scr' + 'ipt>';
+      const imgPayload = '<img src=x onerror=alert(1)>';
+      const payloads = [
+        { path: '/search.php?searchFor=' + encodeURIComponent(scriptPayload), check: scriptPayload, label: 'script tag' },
+        { path: '/search.php?searchFor=' + encodeURIComponent(imgPayload), check: imgPayload, label: 'img onerror' }
+      ];
+
+      let found = false, xssPayload = '', xssUrl = '';
+      for (const p of payloads) {
+        const url = target + p.path;
+        log('XSS', `Testing ${p.label}...`, 'cyan');
+        const res = await safeFetch(url);
+        if (!res) { log('XSS', `No response for ${p.label}`, 'yellow'); continue }
+        const text = await res.text();
+        if (text.includes(p.check)) {
+          found = true; xssPayload = p.check; xssUrl = url;
+          log('XSS', `REFLECTED XSS CONFIRMED ██ HIGH`, 'red');
+          break;
+        }
+      }
+
+      if (found) {
+        verifyStore['XSS'] = { evidence: `Payload: ${xssPayload}\nReflected in response at: ${xssUrl}`, url: xssUrl };
+        const inc = {
+          stage: 'EXECUTION', threat_type: 'CROSS_SITE_SCRIPTING', severity: 'HIGH', confidence: 91,
+          mitre_technique: 'T1059.007', mitre_tactic: 'Execution', layers_involved: ['application'],
+          narration_analyst: 'Reflected XSS confirmed — payload rendered without sanitization. Session hijacking possible. T1059.007.',
+          narration_ceo: 'Attackers can send users a link that steals their login session. No warning shown to victim.',
+          _5w: { what: 'Reflected Cross-Site Scripting', where: '/search.php?searchFor=', why: 'Output not HTML-encoded before rendering', when: ts(), who: 'Attacker who sends crafted link to victim', impact: 'Session hijacking, credential theft, malware delivery' },
+          _evidence: `Payload: ${esc(xssPayload)}\nEndpoint: /search.php?searchFor=\nReflected: YES`, _target: target
+        };
+        const result = await insertIncident(inc); inc._id = result?.id || 'xss';
+        addIncidentCard(inc);
+      } else { log('XSS', 'No reflected XSS detected', 'green') }
+      return found;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROBE 4 — SENSITIVE FILE EXPOSURE (T1083)
+    // ═══════════════════════════════════════════
+    async function probeFiles(target) {
+      log('FILE_SCAN', 'Scanning for sensitive files...', 'cyan');
+      const paths = [
+        { path: '/admin/', sev: 'HIGH', label: 'Admin panel' },
+        { path: '/.env', sev: 'CRITICAL', label: 'Environment file' },
+        { path: '/backup.sql', sev: 'CRITICAL', label: 'DB backup' },
+        { path: '/phpinfo.php', sev: 'HIGH', label: 'PHP Info' },
+        { path: '/config.php', sev: 'HIGH', label: 'Config' },
+        { path: '/robots.txt', sev: 'LOW', label: 'Robots.txt' },
+        { path: '/server-status', sev: 'HIGH', label: 'Server status' },
+        { path: '/phpmyadmin/', sev: 'CRITICAL', label: 'phpMyAdmin' }
+      ];
+      let exposed = [];
+      for (const p of paths) {
+        log('FILE_SCAN', `Checking ${p.path}...`, 'cyan');
+        const res = await safeFetch(target + p.path);
+        if (!res) continue;
+        if (res.status === 200) {
+          const text = await res.text();
+          if (text.length > 20) {
+            exposed.push({ ...p, size: text.length, preview: text.slice(0, 200) });
+            const c = p.sev === 'CRITICAL' ? 'red' : p.sev === 'HIGH' ? 'yellow' : 'green';
+            log('FILE_SCAN', `${p.path} EXPOSED (${text.length} bytes) ██ ${p.sev}`, c);
+            if (p.path === '/robots.txt') {
+              const disallow = text.match(/Disallow:\s*(.+)/gi) || [];
+              if (disallow.length) log('FILE_SCAN', `Hidden paths: ${disallow.map(d => d.replace(/Disallow:\s*/i, '')).join(', ')}`, 'yellow');
+            }
+          }
+        } else { log('FILE_SCAN', `${p.path} → ${res.status}`, 'green') }
+      }
+
+      if (exposed.length) {
+        const evidenceText = exposed.map(f => `${f.path} → 200 (${f.size} bytes) [${f.sev}]\nPreview: ${f.preview.slice(0, 100)}`).join('\n\n');
+        verifyStore['EXPOSED_FILES'] = { evidence: evidenceText };
+        for (const f of exposed.filter(f => f.sev === 'CRITICAL' || f.sev === 'HIGH')) {
+          const inc = {
+            stage: 'DISCOVERY', threat_type: 'SENSITIVE_FILE_EXPOSED', severity: f.sev, confidence: 99,
+            mitre_technique: 'T1083', mitre_tactic: 'Discovery', layers_involved: ['network', 'application'],
+            narration_analyst: `Sensitive file exposed: ${f.path} (${f.size} bytes). Accessible without authentication. T1083.`,
+            narration_ceo: `The file ${f.path} is publicly downloadable. ${f.sev === 'CRITICAL' ? 'This could contain database passwords or full backups.' : 'This reveals internal application structure.'}`,
+            _5w: { what: `${f.label} publicly accessible`, where: f.path, why: 'No access controls on sensitive directories', when: ts(), who: 'Anyone who knows common file paths', impact: 'Database credentials, source code, backup data downloadable' },
+            _evidence: `Path: ${f.path}\nStatus: 200\nSize: ${f.size} bytes\nPreview:\n${f.preview.slice(0, 200)}`, _target: target
+          };
+          const result = await insertIncident(inc); inc._id = result?.id || 'file_' + f.path;
+          addIncidentCard(inc);
+        }
+      }
+      return exposed;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROBE 5 — SECURITY HEADERS (T1562)
+    // ═══════════════════════════════════════════
+    async function probeHeaders(target) {
+      log('SEC_HEADERS', 'Analyzing security headers...', 'cyan');
+      const checks = [
+        { h: 'content-security-policy', label: 'Content-Security-Policy', sev: 'HIGH' },
+        { h: 'x-frame-options', label: 'X-Frame-Options', sev: 'MEDIUM' },
+        { h: 'strict-transport-security', label: 'Strict-Transport-Security', sev: 'HIGH' },
+        { h: 'x-content-type-options', label: 'X-Content-Type-Options', sev: 'LOW' },
+        { h: 'x-xss-protection', label: 'X-XSS-Protection', sev: 'MEDIUM' },
+        { h: 'referrer-policy', label: 'Referrer-Policy', sev: 'LOW' },
+        { h: 'permissions-policy', label: 'Permissions-Policy', sev: 'LOW' }
+      ];
+      // Use allorigins API to get REAL headers (CORS proxy strips them)
+      let realHeaders = {};
+      try {
+        const apiUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(target);
+        const resp = await fetch(apiUrl);
+        if (resp.ok) {
+          const json = await resp.json();
+          // allorigins returns status.response_headers as an object
+          if (json.status && json.status.response_headers) {
+            const rh = json.status.response_headers;
+            Object.keys(rh).forEach(k => { realHeaders[k.toLowerCase()] = rh[k] });
+          }
+        }
+      } catch (e) {
+        log('SEC_HEADERS', 'Fetching real headers via API...', 'cyan');
+      }
+      // Fallback: also try the CORS proxy response
+      if (Object.keys(realHeaders).length === 0) {
+        const res = await safeFetch(target);
+        if (!res) { log('SEC_HEADERS', 'Cannot fetch target', 'yellow'); return [] }
+        checks.forEach(c => { const v = res.headers.get(c.h); if (v) realHeaders[c.h] = v; });
+      }
+      let missing = [], found = [];
+      for (const c of checks) {
+        if (realHeaders[c.h]) { found.push(c); log('SEC_HEADERS', `✓ ${c.label} — PRESENT`, 'green') }
+        else { missing.push(c); log('SEC_HEADERS', `✗ ${c.label} — MISSING`, c.sev === 'HIGH' ? 'red' : 'yellow') }
+      }
+
+      if (missing.length > 0 && missing.length < checks.length) {
+        // Some headers present, some missing — real result
+        const list = missing.map(m => m.label).join(', ');
+        verifyStore['MISSING_HEADERS'] = { evidence: `Found: ${found.map(f => f.label).join(', ')}\nMissing: ${missing.map(m => `${m.label} — ${m.sev}`).join('\n')}` };
+        const sev = missing.some(m => m.sev === 'HIGH') ? 'HIGH' : 'MEDIUM';
+        const inc = {
+          stage: 'DEFENSE_EVASION', threat_type: 'MISSING_SECURITY_HEADERS', severity: sev, confidence: 95,
+          mitre_technique: 'T1562', mitre_tactic: 'Defense Evasion', layers_involved: ['application'],
+          narration_analyst: `${missing.length}/${checks.length} security headers absent: ${list}. ${found.length} headers configured correctly. T1562.`,
+          narration_ceo: `Your website has ${found.length} security headers but is still missing ${missing.length}. These gaps leave users vulnerable to specific attacks.`,
+          _5w: { what: `${missing.length} security headers absent, ${found.length} present`, where: `HTTP responses from ${target}`, why: 'Incomplete header security configuration', when: ts(), who: 'Exploitable by attackers targeting unprotected vectors', impact: 'Partial protection — remaining gaps enable targeted attacks' },
+          _evidence: `Present headers: ${found.map(f => f.label).join(', ')}\n\nMissing headers:\n${missing.map(m => m.label + ' (' + m.sev + ')').join('\n')}`, _target: target
+        };
+        const result = await insertIncident(inc); inc._id = result?.id || 'headers';
+        addIncidentCard(inc);
+      } else if (missing.length === checks.length) {
+        // ALL missing — real finding
+        const list = missing.map(m => m.label).join(', ');
+        verifyStore['MISSING_HEADERS'] = { evidence: `Missing headers:\n${missing.map(m => `${m.label} — ${m.sev}`).join('\n')}` };
+        const inc = {
+          stage: 'DEFENSE_EVASION', threat_type: 'MISSING_SECURITY_HEADERS', severity: 'HIGH', confidence: 99,
+          mitre_technique: 'T1562', mitre_tactic: 'Defense Evasion', layers_involved: ['application'],
+          narration_analyst: `All ${checks.length} security headers absent: ${list}. No CSP, no HSTS, no frame protection. T1562.`,
+          narration_ceo: 'Your website is missing ALL basic security protections. This is like leaving every door and window open.',
+          _5w: { what: `All ${checks.length} critical security headers absent`, where: `All HTTP responses from ${target}`, why: 'Server has zero header security configuration', when: ts(), who: 'Exploitable by any attacker targeting users', impact: 'Enables XSS, clickjacking, SSL stripping, MIME sniffing attacks' },
+          _evidence: `Missing headers:\n${missing.map(m => m.label + ' (' + m.sev + ')').join('\n')}`, _target: target
+        };
+        const result = await insertIncident(inc); inc._id = result?.id || 'headers';
+        addIncidentCard(inc);
+      } else {
+        log('SEC_HEADERS', '✓ All security headers present — well configured!', 'green');
+      }
+      return missing;
+    }
+
+    // ═══════════════════════════════════════════
+    //  SIMULATION SCENARIOS (unchanged data)
+    // ═══════════════════════════════════════════
+    const SCENARIOS = {
+      apt29: [
+        {
+          stage: 'RECON', threat_type: 'PORT_SCAN', severity: 'LOW', confidence: 71, mitre_technique: 'T1046', mitre_tactic: 'Discovery', layers_involved: ['network'],
+          narration_analyst: 'Systematic SYN scan across /24 subnet. 254 hosts probed, 12 responded. T1046 Network Service Discovery.',
+          narration_ceo: 'Someone is quietly scanning every device on your network looking for open doors. This is the first phase of a targeted attack.',
+          _evidence: 'Src: 203.0.113.42 → Dst: 192.168.1.0/24\nPorts: 22,80,443,3389,445 · Flags: SYN only\nRate: 254 packets/4.2s · Pattern: sequential',
+          _5w: { what: 'Network reconnaissance scan', where: 'Internal subnet 192.168.1.0/24', why: 'Attacker identifying live hosts and open services', when: '—', who: 'External IP 203.0.113.42', impact: 'Attack surface mapped. Targeted attacks incoming.' }
+        },
+        {
+          stage: 'INITIAL_ACCESS', threat_type: 'BRUTE_FORCE', severity: 'MEDIUM', confidence: 84, mitre_technique: 'T1110', mitre_tactic: 'Credential Access', layers_involved: ['network', 'application'], correlated: true,
+          narration_analyst: '847 failed auth attempts in 90s against /admin. Credential stuffing — same source IP from Stage 1. Correlation: +23%.',
+          narration_ceo: 'The same attacker is now trying thousands of passwords on your login page. They haven\'t gotten in yet — this is your window to block them.',
+          _evidence: '847 POST /admin/login · Status: 401\nRate: 9.4 req/s · Source: 203.0.113.42\nPattern: rockyou.txt wordlist detected',
+          _5w: { what: 'Credential stuffing attack', where: '/admin login portal', why: 'No rate limiting or account lockout', when: '—', who: 'External IP 203.0.113.42 (same as recon)', impact: 'Credential breach. 81% of breaches involve stolen credentials.' }
+        },
+        {
+          stage: 'EXECUTION', threat_type: 'MALWARE_EXECUTION', severity: 'HIGH', confidence: 91, mitre_technique: 'T1059.001', mitre_tactic: 'Execution', layers_involved: ['endpoint', 'network'], correlated: true,
+          narration_analyst: 'PowerShell execution on WORKSTATION-04. Base64 encoded. Beacon to 185.220.101.47:8443 established. T1059.001.',
+          narration_ceo: 'Malware is running on one of your computers. It\'s already called home to the attacker\'s server. The attacker now has remote control.',
+          _evidence: 'Process: powershell.exe (PID 4821)\nParent: cmd.exe → chrome.exe\nCommand: powershell -enc JABjAGwAaQBlAG50...\nBeacon: 192.168.1.47 → 185.220.101.47:8443',
+          _5w: { what: 'PowerShell-based malware execution', where: 'WORKSTATION-04 (192.168.1.47)', why: 'Phishing payload executed via browser', when: '—', who: 'APT29 tooling pattern', impact: 'Active compromise. Ransomware deployment likely within 24-72 hours.' }
+        },
+        {
+          stage: 'LATERAL_MOVEMENT', threat_type: 'LATERAL_MOVEMENT', severity: 'HIGH', confidence: 87, mitre_technique: 'T1021', mitre_tactic: 'Lateral Movement', layers_involved: ['network', 'endpoint'], correlated: true,
+          narration_analyst: 'SMB connections from WORKSTATION-04 to 8 hosts. Pass-the-hash: NTLM auth without password. SERVER-02 now beaconing. T1021.002.',
+          narration_ceo: 'The infection has spread from one computer to multiple systems. The attacker is moving through your network like through an unlocked building.',
+          _evidence: 'SMB: 192.168.1.47 → 192.168.1.{1-15}\nAuth: NTLM Pass-the-Hash\nNew beacon: 192.168.1.10 → 185.220.101.47:8443\nAffected: WORKSTATION-04, SERVER-02',
+          _5w: { what: 'Lateral movement via Pass-the-Hash', where: 'WORKSTATION-04 → 8 internal hosts', why: 'Compromised NTLM credentials reused', when: '—', who: 'APT29 operator (automated)', impact: 'Network-wide compromise. Containment cost multiplies per host.' }
+        },
+        {
+          stage: 'EXFILTRATION', threat_type: 'DATA_EXFILTRATION', severity: 'CRITICAL', confidence: 96, mitre_technique: 'T1041', mitre_tactic: 'Exfiltration', layers_involved: ['network', 'endpoint', 'application'], correlated: true,
+          narration_analyst: '4.2GB outbound to 185.220.101.47 (Tor exit). 47,832 file accesses. All three layers correlated — max confidence. T1041.',
+          narration_ceo: 'Your data is being stolen right now. 4.2GB leaving your server to Eastern Europe. Every second costs more.',
+          _evidence: 'Bytes out: 4,412,182,528 (4.2GB)\nDst: 185.220.101.47:8443 (Tor exit)\nDuration: 8m 14s · Rate: 8.75 Mbps\nFiles accessed: 47,832\nProtocol: TLS 1.2 self-signed',
+          _5w: { what: 'Data exfiltration via encrypted tunnel', where: 'SERVER-02 → 185.220.101.47 (Tor)', why: 'Compromised system used as staging point', when: '—', who: 'APT29 (Cozy Bear)', impact: '$4.88M avg breach cost. GDPR: 72hr notification. Fine: 4% revenue.' }
+        }
+      ],
+      ransomware: [
+        {
+          stage: 'INITIAL_ACCESS', threat_type: 'PHISHING', severity: 'MEDIUM', confidence: 79, mitre_technique: 'T1566.001', mitre_tactic: 'Initial Access', layers_involved: ['application'],
+          narration_analyst: 'Phishing email with macro-enabled attachment. Typosquat domain: paypa1.com. AutoOpen macro executed.', narration_ceo: 'An employee opened a fake invoice email. The attachment ran malicious code the moment it was opened.', _evidence: 'Email: from noreply@paypa1.com (typo domain)\nAttachment: Invoice_March2026.xlsm\nOpened by: finance@company.com at 09:14 AM\nMacro: AutoOpen() → shell command', _5w: { what: 'Phishing with malicious macro attachment', where: 'finance@company.com inbox', why: 'Email filtering missed typosquat domain', when: '—', who: 'Ransomware operator (LockBit pattern)', impact: 'Initial access. Average phishing breach: $4.76M.' }
+        },
+        {
+          stage: 'EXECUTION', threat_type: 'RANSOMWARE_DROPPER', severity: 'HIGH', confidence: 93, mitre_technique: 'T1486', mitre_tactic: 'Impact', layers_involved: ['endpoint', 'network'], correlated: true,
+          narration_analyst: 'Ransomware dropper: svchost32.exe (6.2MB). File encryption begun targeting .docx .xlsx .pdf .jpg .db.', narration_ceo: 'Ransomware is encrypting files on the infected computer right now. Documents, spreadsheets, databases are being locked.', _evidence: 'File: %TEMP%\\svchost32.exe (6.2MB)\nDropped by: EXCEL.EXE (PID 2847)\nEncryption started: 09:14:47 AM\nTargets: .docx .xlsx .pdf .jpg .db', _5w: { what: 'Ransomware file encryption initiated', where: 'Endpoint: finance-ws-01', why: 'Macro dropped executable payload', when: '—', who: 'LockBit ransomware group', impact: 'File encryption in progress. Avg ransom: $1.5M.' }
+        },
+        {
+          stage: 'DEFENSE_EVASION', threat_type: 'PROCESS_INJECTION', severity: 'HIGH', confidence: 88, mitre_technique: 'T1055', mitre_tactic: 'Defense Evasion', layers_involved: ['endpoint'], correlated: true,
+          narration_analyst: 'Injected into svchost.exe (SYSTEM). Windows Defender disabled via registry. Shadow copies deleted.', narration_ceo: 'The malware has disabled your antivirus and deleted your local backups. It\'s making sure you can\'t recover files.', _evidence: 'Injected into: svchost.exe (PID 892, SYSTEM)\nMethod: CreateRemoteThread\nAV: Defender disabled (registry)\nShadows: vssadmin delete shadows /all', _5w: { what: 'Process injection + defense evasion', where: 'svchost.exe (SYSTEM context)', why: 'Avoiding detection, destroying recovery options', when: '—', who: 'Automated ransomware toolkit', impact: 'Recovery options eliminated. Only backups survive.' }
+        },
+        {
+          stage: 'EXFILTRATION', threat_type: 'DATA_EXFILTRATION', severity: 'CRITICAL', confidence: 95, mitre_technique: 'T1041', mitre_tactic: 'Exfiltration', layers_involved: ['network', 'endpoint', 'application'], correlated: true,
+          narration_analyst: 'Double extortion: 2.1GB exfiltrated before encryption. Ransom note deployed. Demand: $1.5M XMR.', narration_ceo: 'Attackers stole your data AND encrypted it. They\'ll leak it publicly if ransom isn\'t paid. This is double extortion.', _evidence: 'Pre-encryption exfil: 2.1GB in 6 minutes\nDouble extortion confirmed\nRansom note: YOUR_FILES_ARE_ENCRYPTED.txt\nDemand: $1.5M in Monero (XMR)', _5w: { what: 'Double extortion: exfiltrate then encrypt', where: 'All accessible file shares', why: 'Maximize leverage for ransom payment', when: '—', who: 'LockBit/BlackCat pattern', impact: '$1.5M ransom + $4.88M breach cost + reputation damage.' }
+        }
+      ],
+      insider: [
+        {
+          stage: 'COLLECTION', threat_type: 'SENSITIVE_FILE_ACCESS', severity: 'MEDIUM', confidence: 76, mitre_technique: 'T1005', mitre_tactic: 'Collection', layers_involved: ['application', 'endpoint'],
+          narration_analyst: 'Anomalous file access: 847 files in 2 hours (baseline: 23/day). Customer data, contracts, pricing. 11:47 PM. T1005.', narration_ceo: 'An employee is downloading hundreds of sensitive files late at night. This is way outside their normal behavior.', _evidence: 'User: jsmith (Sales Manager)\nFiles accessed: 847 in 2 hours (normal: 23/day)\nTypes: customer_data_*, contracts_*, pricing_*\nTime: 11:47 PM (outside working hours)', _5w: { what: 'Bulk sensitive file access', where: 'File server: customer_data, contracts, pricing', why: 'Employee downloading data outside normal pattern', when: '—', who: 'jsmith (Sales Manager, insider)', impact: 'Customer data, contracts, pricing — competitive intelligence.' }
+        },
+        {
+          stage: 'EXFILTRATION', threat_type: 'USB_EXFILTRATION', severity: 'HIGH', confidence: 89, mitre_technique: 'T1052.001', mitre_tactic: 'Exfiltration', layers_involved: ['endpoint'], correlated: true,
+          narration_analyst: 'USB: SanDisk 64GB (new device). 3.4GB written in 4 minutes at 2:13 AM. Matches previous collection pattern.', narration_ceo: 'The employee copied 3.4 gigabytes of your files to a USB drive at 2 AM. This matches the files they accessed earlier.', _evidence: 'USB device: SanDisk 64GB (new, never seen)\nWrite: 3.4GB in 4 minutes at 2:13 AM\nFiles: matching previous collection\nBadge: not swiped (tailgating suspected)', _5w: { what: 'USB data exfiltration', where: 'WORKSTATION-12 → USB drive', why: 'Insider stealing data for personal gain or competitor', when: '—', who: 'jsmith — disgruntled employee (2-week notice)', impact: 'Customer database + pricing. Competitive damage: $2-5M.' }
+        },
+        {
+          stage: 'IMPACT', threat_type: 'DATA_DESTRUCTION', severity: 'CRITICAL', confidence: 91, mitre_technique: 'T1485', mitre_tactic: 'Impact', layers_involved: ['endpoint', 'application'], correlated: true,
+          narration_analyst: '1,247 files deleted from /shared/contracts/. Pattern: delete after copy (covering tracks). Last backup: 3 days ago.', narration_ceo: 'The employee deleted over 1,000 contract files after copying them. They\'re trying to cover their tracks. Last backup was 3 days ago.', _evidence: 'Del commands: 1,247 files in /shared/contracts/\nUser: jsmith from WORKSTATION-12\nPattern: delete after copy\nBackup gap: last backup 3 days ago', _5w: { what: 'Deliberate data destruction (covering tracks)', where: '/shared/contracts/ (1,247 files)', why: 'Hiding evidence of data theft', when: '—', who: 'jsmith (insider, post-theft)', impact: '3 days of contract data lost. Legal liability for missing records.' }
+        }
+      ],
+      c2beacon: [
+        {
+          stage: 'EXECUTION', threat_type: 'C2_BEACONING', severity: 'HIGH', confidence: 81, mitre_technique: 'T1071.001', mitre_tactic: 'Command and Control', layers_involved: ['network', 'endpoint'],
+          narration_analyst: 'Beacon interval: 58-62s (±3s jitter). Known C2: 185.220.101.47. Dwell time: 2 weeks. T1071.001.', narration_ceo: 'A computer has been secretly communicating with an attacker\'s server for two weeks. The attacker has had access this entire time.', _evidence: 'Beacon: 58-62s interval (±3s jitter)\nDst: 185.220.101.47 (Tor exit — known C2)\nPayload: 847-923 bytes (consistent)\nDwell time: 14 days (first seen 2 weeks ago)', _5w: { what: 'Command & Control beaconing', where: 'ENDPOINT-07 → 185.220.101.47', why: 'Compromised system maintaining persistent access', when: '—', who: 'Unknown APT (infra matches APT28/29)', impact: '2-week dwell time. Full network access assumed.' }
+        },
+        {
+          stage: 'EXECUTION', threat_type: 'REMOTE_COMMAND', severity: 'HIGH', confidence: 86, mitre_technique: 'T1059', mitre_tactic: 'Execution', layers_involved: ['endpoint'], correlated: true,
+          narration_analyst: 'Commands received: whoami /all, net user, ipconfig /all. System profiling via C2. T1059.', narration_ceo: 'The attacker is running commands to understand your systems — who uses them, what\'s connected, where the valuable data is.', _evidence: 'Commands via C2:\nwhoami /all\nnet user\nipconfig /all\nnet share\ndir C:\\Users\\', _5w: { what: 'Remote system profiling via C2', where: 'ENDPOINT-07 command shell', why: 'Attacker mapping environment for next phase', when: '—', who: 'C2 operator (automated + manual)', impact: 'System fully profiled. Data theft or ransomware next.' }
+        },
+        {
+          stage: 'CREDENTIAL_ACCESS', threat_type: 'CREDENTIAL_DUMP', severity: 'CRITICAL', confidence: 92, mitre_technique: 'T1003.001', mitre_tactic: 'Credential Access', layers_involved: ['endpoint'], correlated: true,
+          narration_analyst: 'LSASS memory access by svchost32.exe. Mimikatz signature. 14 accounts harvested including 2 domain admins. T1003.001.', narration_ceo: 'The attacker has stolen the passwords of 14 employees including 2 system administrators. They now have the keys to everything.', _evidence: 'LSASS.exe memory access: svchost32.exe\nTool: Mimikatz (sekurlsa::logonpasswords)\nHarvested: 14 accounts\nIncluding: 2 domain admin accounts', _5w: { what: 'Credential dumping via Mimikatz', where: 'LSASS.exe memory on ENDPOINT-07', why: 'Harvesting credentials for privilege escalation', when: '—', who: 'APT operator (manual Mimikatz usage)', impact: '14 accounts compromised. 2 domain admins = full control.' }
+        },
+        {
+          stage: 'PERSISTENCE', threat_type: 'REGISTRY_PERSISTENCE', severity: 'HIGH', confidence: 88, mitre_technique: 'T1547.001', mitre_tactic: 'Persistence', layers_involved: ['endpoint'], correlated: true,
+          narration_analyst: 'Registry Run key: WindowsUpdate = svchost32.exe. Survives reboot. Hidden from standard view. T1547.001.', narration_ceo: 'The attacker has made their malware survive computer restarts. Even if you reboot, they maintain access.', _evidence: 'Key: HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\nValue: WindowsUpdate = C:\\Users\\Public\\svchost32.exe\nSurvives reboot\nHidden from standard registry view', _5w: { what: 'Registry-based persistence mechanism', where: 'HKLM Run key on ENDPOINT-07', why: 'Ensuring persistent access survives reboots', when: '—', who: 'Automated C2 persistence module', impact: 'Permanent access. Must clean registry + file to remove.' }
+        }
+      ]
+    };
+
+    // ═══════════════════════════════════════════
+    //  EXECUTIVE SUMMARY
+    // ═══════════════════════════════════════════
+    function showSummary(duration) {
+      const crits = incidents.filter(i => i.severity === 'CRITICAL').length;
+      const highs = incidents.filter(i => i.severity === 'HIGH').length;
+      const meds = incidents.filter(i => i.severity === 'MEDIUM').length;
+      const lows = incidents.filter(i => i.severity === 'LOW').length;
+      const total = incidents.length;
+      const riskScore = Math.min(100, Math.round(crits * 25 + highs * 15 + meds * 8 + lows * 3));
+      const maxCost = crits > 0 ? 9.4 : highs > 0 ? 4.2 : meds > 0 ? 1.8 : 0.4;
+      const minCost = crits > 0 ? 4.2 : highs > 0 ? 1.8 : meds > 0 ? 0.4 : 0.1;
+      const op = document.getElementById('operatorName').value || 'Analyst';
+      const target = document.getElementById('targetUrl').value;
+
+      const el = document.getElementById('summaryContent');
+      el.innerHTML = `
+    <h2>SENTINEL AI — OPERATION COMPLETE</h2>
+    <div class="summary-row"><span class="k">Target</span><span class="v">${target}</span></div>
+    <div class="summary-row"><span class="k">Duration</span><span class="v">${duration}s</span></div>
+    <div class="summary-row"><span class="k">Operator</span><span class="v">${op}</span></div>
+    <div class="summary-row"><span class="k">Mode</span><span class="v">${mode === 'live' ? 'LIVE SCAN' : 'SIMULATION'}</span></div>
+    <div style="margin:16px 0">
+      <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">FINDINGS</div>
+      ${crits ? `<div class="sev-bar"><div class="block" style="width:${crits * 30}px;background:var(--red)"></div><span style="color:var(--red)">CRITICAL ${crits}</span></div>` : ''}
+      ${highs ? `<div class="sev-bar"><div class="block" style="width:${highs * 30}px;background:var(--orange)"></div><span style="color:var(--orange)">HIGH ${highs}</span></div>` : ''}
+      ${meds ? `<div class="sev-bar"><div class="block" style="width:${meds * 30}px;background:var(--yellow)"></div><span style="color:var(--yellow)">MEDIUM ${meds}</span></div>` : ''}
+      ${lows ? `<div class="sev-bar"><div class="block" style="width:${lows * 30}px;background:var(--blue)"></div><span style="color:var(--blue)">LOW ${lows}</span></div>` : ''}
+    </div>
+    <div class="summary-row"><span class="k">RISK SCORE</span><span class="v" style="color:${riskScore >= 80 ? 'var(--red)' : riskScore >= 50 ? 'var(--orange)' : 'var(--green)'}">${riskScore}/100 — ${riskScore >= 80 ? 'CRITICAL' : riskScore >= 50 ? 'HIGH' : 'MODERATE'}</span></div>
+    <div class="summary-row"><span class="k">EST. BREACH COST</span><span class="v" style="color:var(--red)">$${minCost}M — $${maxCost}M</span></div>
+    <div style="margin:12px 0;font-size:10px;color:var(--text-dim);line-height:1.6">
+      All findings fed to Blue Team SOC ✓<br>
+      Remediation playbooks generated ✓<br>
+      MITRE ATT&CK mapped ✓
+    </div>
+    <div class="summary-btns">
+      <button onclick="downloadReport()" style="background:transparent;border:1px solid var(--green);color:var(--green)">DOWNLOAD REPORT</button>
+      <a href="http://localhost:5174" target="_blank" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan)">OPEN BLUE TEAM SOC</a>
+      <button onclick="document.getElementById('execSummary').classList.remove('show')" style="background:transparent;border:1px solid var(--muted);color:var(--text-dim)">CLOSE</button>
+    </div>`;
+      document.getElementById('execSummary').classList.add('show');
+    }
+
+    // ═══════════════════════════════════════════
+    //  DOWNLOAD REPORT
+    // ═══════════════════════════════════════════
+    function downloadReport() {
+      const target = document.getElementById('targetUrl').value;
+      const op = document.getElementById('operatorName').value || 'Analyst';
+      let report = `SENTINEL AI — PURPLE TEAM OPERATIONS REPORT\n${'='.repeat(50)}\n\n`;
+      report += `Target: ${target}\nOperator: ${op}\nDate: ${new Date().toISOString()}\nMode: ${mode === 'live' ? 'LIVE SCAN' : 'SIMULATION'}\nTotal Findings: ${incidents.length}\n\n`;
+      report += `${'─'.repeat(50)}\nFINDINGS\n${'─'.repeat(50)}\n\n`;
+      incidents.forEach((inc, i) => {
+        report += `[${i + 1}] ${inc.severity} — ${inc.threat_type}\n`;
+        report += `    Stage: ${inc.stage} | MITRE: ${inc.mitre_technique} | Confidence: ${inc.confidence}%\n`;
+        if (inc._5w) {
+          report += `    WHAT: ${inc._5w.what}\n    WHERE: ${inc._5w.where}\n    WHY: ${inc._5w.why}\n    WHO: ${inc._5w.who}\n    IMPACT: ${inc._5w.impact}\n`;
+        }
+        if (inc._evidence) report += `    EVIDENCE: ${inc._evidence.slice(0, 200)}\n`;
+        report += '\n';
+      });
+      report += `${'─'.repeat(50)}\nEVIDENCE ARCHIVE\n${'─'.repeat(50)}\n\n`;
+      for (const [k, v] of Object.entries(verifyStore)) {
+        report += `[${k}]\n${v.evidence}\n${v.url ? 'URL: ' + v.url : ''}\n\n`;
+      }
+      const blob = new Blob([report], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `sentinel-report-${new Date().toISOString().slice(0, 10)}.txt`;
+      a.click();
+    }
+
+    // ═══════════════════════════════════════════
+    //  MAIN OPERATION RUNNER
+    // ═══════════════════════════════════════════
+    async function startOperation() {
+      const btn = document.getElementById('scanBtn');
+      btn.disabled = true; btn.classList.add('scanning');
+      btn.textContent = 'OPERATION IN PROGRESS...';
+      document.getElementById('pillRed').textContent = 'RED TEAM: ACTIVE';
+      document.getElementById('pillRed').className = 'pill red';
+
+      // Reset state
+      incidents = []; verifyStore = {}; playbookChecks = {}; selectedIncident = null;
+      document.getElementById('attackLog').innerHTML = '';
+      document.getElementById('incidentFeed').innerHTML = '';
+      document.getElementById('statThreats').textContent = '0';
+      document.getElementById('samOutput').innerHTML = '<span style="color:var(--text-dim)">Operation starting...</span>';
+      document.getElementById('samVisual').classList.remove('show');
+      scanStart = Date.now();
+
+      if (mode === 'live') {
+        await runLiveScan();
+      } else {
+        await runSimulation();
+      }
+
+      const duration = ((Date.now() - scanStart) / 1000).toFixed(1);
+      log('SYSTEM', `Operation complete — ${incidents.length} findings in ${duration}s`, 'green');
+
+      btn.disabled = false; btn.classList.remove('scanning');
+      btn.textContent = '⚡ INITIATE RED TEAM OPERATION';
+      document.getElementById('pillRed').textContent = 'RED TEAM: COMPLETE';
+      document.getElementById('pillRed').className = 'pill active';
+
+      updateVerify();
+      showSummary(duration);
+    }
+
+    // ═══ LIVE SCAN — 5 real probes ═══
+    async function runLiveScan() {
+      const target = document.getElementById('targetUrl').value.trim().replace(/\/+$/, '');
+      if (!target) { log('SYSTEM', 'No target URL specified', 'red'); return }
+
+      log('SYSTEM', `Initiating live scan against ${target}`, 'cyan');
+      log('SYSTEM', `Proxy: ${CORS_PROXY}`, 'dim');
+      log('SYSTEM', '─'.repeat(40), 'dim');
+
+      // Probe 1
+      await probeRecon(target);
+      await wait(800); log('SYSTEM', '─'.repeat(40), 'dim');
+
+      // Probe 2
+      await probeSQLi(target);
+      await wait(800); log('SYSTEM', '─'.repeat(40), 'dim');
+
+      // Probe 3
+      await probeXSS(target);
+      await wait(800); log('SYSTEM', '─'.repeat(40), 'dim');
+
+      // Probe 4
+      await probeFiles(target);
+      await wait(800); log('SYSTEM', '─'.repeat(40), 'dim');
+
+      // Probe 5
+      await probeHeaders(target);
+      log('SYSTEM', '─'.repeat(40), 'dim');
+    }
+
+    // ═══ SIMULATION MODE ═══
+    async function runSimulation() {
+      const scenarioKey = document.getElementById('simSelect').value;
+      const stages = SCENARIOS[scenarioKey];
+      if (!stages) { log('SYSTEM', 'Unknown scenario', 'red'); return }
+
+      log('SYSTEM', 'SIMULATION MODE ACTIVE', 'yellow');
+      log('SYSTEM', 'Modeling APT behavior from MITRE ATT&CK + CICIDS 2017', 'dim');
+      log('SYSTEM', '─'.repeat(40), 'dim');
+
+      for (let i = 0; i < stages.length; i++) {
+        const s = stages[i];
+        log(s.stage, `Deploying ${s.threat_type}...`, 'cyan');
+        await wait(1500);
+
+        // Set timestamp
+        s._5w = s._5w || {};
+        s._5w.when = ts();
+
+        const result = await insertIncident(s);
+        s._id = result?.id || ('sim_' + i);
+        s._target = 'Simulated Environment';
+        addIncidentCard(s);
+
+        // Auto-analyze with Samantha
+        await analyzeSamantha(s);
+
+        if (i < stages.length - 1) {
+          const delayMs = 8000 + Math.random() * 2000;
+          log('SYSTEM', `Next stage in ${(delayMs / 1000).toFixed(0)}s...`, 'dim');
+          await wait(delayMs);
+          log('SYSTEM', '─'.repeat(40), 'dim');
+        }
+      }
+
+      // Set simulation evidence note
+      verifyStore['SIMULATION_SOURCE'] = {
+        evidence: 'Evidence based on CICIDS 2017 / UNSW-NB15 dataset patterns.\nDataset: https://www.unb.ca/cic/datasets/ids-2017.html\nMITRE ATT&CK framework mapping applied.',
+        note: 'Synthetic data — real attack patterns, simulated evidence.'
+      };
+    }
+  </script>
+</body>
+
+</html>

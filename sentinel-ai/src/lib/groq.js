@@ -1,26 +1,16 @@
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 
-export async function streamFromGroq(prompt, onChunk) {
+export async function streamFromGroq(promptOrMessages, onChunk) {
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 500,
-        stream: true,
-        temperature: 0.7,
-        messages: [
-          {
-            role: 'system',
-            content: `You are Samantha, an elite AI cybersecurity analyst embedded in SENTINEL AI — a real-time SOC threat detection engine.
+    const isArray = Array.isArray(promptOrMessages)
+    
+    const systemMessage = {
+      role: 'system',
+      content: `You are Samantha, an elite AI cybersecurity analyst embedded in SENTINEL AI — a real-time SOC threat detection engine.
 
 You have two briefing modes:
-- ANALYST mode: Technical, precise, uses MITRE ATT&CK framework terminology. Short sharp sentences. Reference specific techniques, tactics, IOCs. Speak like a senior threat hunter.
-- CEO mode: Plain English, zero jargon. Focus on business impact, risk exposure, and recommended executive action. Speak like a trusted security advisor briefing a board.
+- ANALYST mode (SOC Engineer): Technical, precise, uses MITRE ATT&CK framework terminology. Short sharp sentences. Reference specific techniques, tactics, IOCs. Speak like a senior threat hunter finding and fixing vulnerabilities.
+- CEO mode (Incident Commander): Plain English, zero jargon. Focus on coordinating response teams, business impact, risk exposure, and recommended executive action. Speak like a trusted incident commander briefing the response team.
 
 Core capabilities you reference:
 - Multi-layer signal correlation (Network + Endpoint + Application layers)
@@ -36,9 +26,26 @@ Rules:
 - If it's a false positive, explain WHY it's benign with clear reasoning
 - When severity is CRITICAL, convey urgency
 - Reference cross-layer correlation when confidence is above 85%`,
-          },
-          { role: 'user', content: prompt },
-        ],
+    }
+
+    let messages = isArray ? promptOrMessages : [{ role: 'user', content: promptOrMessages }]
+    
+    if (messages.length > 0 && messages[0].role !== 'system') {
+      messages = [systemMessage, ...messages]
+    }
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 500,
+        stream: true,
+        temperature: 0.7,
+        messages: messages,
       }),
     })
 

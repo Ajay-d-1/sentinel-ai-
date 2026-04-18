@@ -40,49 +40,35 @@ function Waveform({ streaming }) {
   );
 }
 
-function StatusDot({ status }) {
-  const colors = { idle: "#444", thinking: "#facc15", streaming: "#00ff41", done: "#00ff41", error: "#ef4444" };
-  const labels = { idle: "STANDBY", thinking: "PROCESSING", streaming: "TRANSMITTING", done: "READY", error: "ERROR" };
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <div
-        style={{
-          width: "8px",
-          height: "8px",
-          borderRadius: "50%",
-          background: colors[status] || "#444",
-          boxShadow: status === "streaming" ? "0 0 6px #00ff41" : "none",
-          animation: status === "streaming" || status === "thinking" ? "sam-pulse 1s infinite" : "none",
-        }}
-      />
-      <span style={{ fontSize: "11px", letterSpacing: "0.12em", color: colors[status] || "#444", fontFamily: "monospace" }}>
-        {labels[status] || "UNKNOWN"}
-      </span>
-    </div>
-  );
-}
-
 export default function SamanthaStream({ incident, mode, onModeToggle }) {
-  const [text, setText] = useState("");
+  const [uiMessages, setUiMessages] = useState([]);
   const [status, setStatus] = useState("idle");
   const [confidence, setConfidence] = useState(null);
-  const textRef = useRef("");
-  const lastProcessedRef = useRef(null);
+  const [chatInput, setChatInput] = useState("");
+  
+  const conversationRef = useRef([]);
   const abortRef = useRef(null);
+  const lastProcessedRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [uiMessages, status]);
 
   const triggerStream = useCallback(
     async (inc, currentMode) => {
       if (!inc) return;
 
-      // Abort any ongoing stream
       if (abortRef.current) {
         abortRef.current.aborted = true;
       }
       const thisStream = { aborted: false };
       abortRef.current = thisStream;
 
-      textRef.current = "";
-      setText("");
+      setUiMessages([]);
+      conversationRef.current = [];
       setStatus("thinking");
       setConfidence(inc.confidence || null);
 
@@ -92,28 +78,36 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
       setStatus("streaming");
 
       const prompt = buildPrompt(inc, currentMode);
+      conversationRef.current = [{ role: 'user', content: prompt }];
+      
+      setUiMessages([{ sender: 'samantha', text: '' }]);
 
+      let currentText = "";
       try {
-        await streamFromGroq(prompt, (chunk) => {
+        await streamFromGroq(conversationRef.current, (chunk) => {
           if (thisStream.aborted) return;
-          textRef.current += chunk;
-          setText(textRef.current);
+          currentText += chunk;
+          setUiMessages((prev) => {
+            const m = [...prev];
+            m[m.length - 1].text = currentText;
+            return m;
+          });
         });
         if (!thisStream.aborted) {
           setStatus("done");
+          conversationRef.current.push({ role: 'assistant', content: currentText });
         }
       } catch (err) {
         console.error("Stream error:", err);
         if (!thisStream.aborted) {
           setStatus("error");
-          setText("AI analysis temporarily unavailable. Review incident data in panels.");
+          setUiMessages([{ sender: 'samantha', text: "AI analysis temporarily unavailable." }]);
         }
       }
     },
     []
   );
 
-  // Trigger on new incident
   useEffect(() => {
     if (!incident) return;
     const incId = incident.id;
@@ -122,12 +116,55 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
     triggerStream(incident, mode);
   }, [incident, triggerStream, mode]);
 
-  // Re-trigger on mode change (only if already analyzed one)
   useEffect(() => {
     if (!incident || !lastProcessedRef.current) return;
     triggerStream(incident, mode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || status === "thinking" || status === "streaming") return;
+
+    const userText = chatInput.trim();
+    setChatInput("");
+    setUiMessages((prev) => [...prev, { sender: 'user', text: userText }, { sender: 'samantha', text: '' }]);
+    conversationRef.current.push({ role: 'user', content: userText });
+
+    setStatus("thinking");
+
+    if (abortRef.current) abortRef.current.aborted = true;
+    const thisStream = { aborted: false };
+    abortRef.current = thisStream;
+
+    let currentText = "";
+    try {
+      setStatus("streaming");
+      await streamFromGroq(conversationRef.current, (chunk) => {
+        if (thisStream.aborted) return;
+        currentText += chunk;
+        setUiMessages((prev) => {
+          const m = [...prev];
+          m[m.length - 1].text = currentText;
+          return m;
+        });
+      });
+      if (!thisStream.aborted) {
+        setStatus("done");
+        conversationRef.current.push({ role: 'assistant', content: currentText });
+      }
+    } catch (err) {
+      console.error("Stream error:", err);
+      if (!thisStream.aborted) {
+        setStatus("error");
+        setUiMessages((prev) => {
+          const m = [...prev];
+          m[m.length - 1].text = "Connection error while processing follow-up.";
+          return m;
+        });
+      }
+    }
+  };
 
   const isFP = incident?.is_false_positive;
   const severity = incident?.severity;
@@ -143,6 +180,8 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
         overflow: "hidden",
         fontFamily: "monospace",
         flex: 1,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <style>{`
@@ -195,7 +234,7 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "10px", color: status === "idle" ? "var(--text-muted)" : "var(--accent-cyan)", letterSpacing: "0.1em", fontWeight: "600" }}>
-              {status === "idle" ? "STANDBY" : status === "streaming" ? "ANALYZING..." : "READY"}
+              {status === "idle" ? "STANDBY" : status === "streaming" ? "ANALYZING..." : status === "thinking" ? "PROCESSING..." : "READY"}
             </span>
             <div
               style={{
@@ -203,8 +242,8 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
                 height: "8px",
                 borderRadius: "50%",
                 background: status === "idle" ? "var(--text-muted)" : "var(--accent-cyan)",
-                boxShadow: status === "streaming" ? "0 0 10px var(--accent-cyan)" : "none",
-                animation: status === "streaming" ? "cyber-pulse 1s infinite" : "none",
+                boxShadow: status === "streaming" || status === "thinking" ? "0 0 10px var(--accent-cyan)" : "none",
+                animation: status === "streaming" || status === "thinking" ? "cyber-pulse 1s infinite" : "none",
               }}
             ></div>
           </div>
@@ -218,10 +257,10 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
               overflow: "hidden",
             }}
           >
-            {["analyst", "ceo"].map((m) => (
+            {[{key: "analyst", label: "SOC ENGINEER"}, {key: "ceo", label: "INCIDENT CMDR"}].map((m) => (
               <button
-                key={m}
-                onClick={() => onModeToggle && onModeToggle(m)}
+                key={m.key}
+                onClick={() => onModeToggle && onModeToggle(m.key)}
                 style={{
                   padding: "6px 14px",
                   fontSize: "11px",
@@ -229,13 +268,13 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
                   fontFamily: "var(--font-sans)",
                   cursor: "pointer",
                   border: "none",
-                  background: mode === m ? "var(--accent-cyan)" : "transparent",
-                  color: mode === m ? "#000" : "var(--text-secondary)",
+                  background: mode === m.key ? "var(--accent-cyan)" : "transparent",
+                  color: mode === m.key ? "#000" : "var(--text-secondary)",
                   fontWeight: "700",
                   transition: "all 0.2s",
                 }}
               >
-                {m.toUpperCase()}
+                {m.label}
               </button>
             ))}
           </div>
@@ -289,12 +328,130 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
         </div>
       </div>
 
-      {/* Text area */}
+      {/* Visual Analysis Dashboard */}
+      {incident && (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "12px",
+          padding: "16px 24px",
+          borderBottom: "1px solid var(--bg-border)",
+          background: "rgba(5, 15, 5, 0.6)",
+        }}>
+          {/* Severity Gauge */}
+          <div style={{
+            background: "rgba(15, 23, 42, 0.4)",
+            border: "1px solid var(--bg-border)",
+            borderRadius: "8px",
+            padding: "14px 16px",
+          }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", letterSpacing: "0.1em", fontWeight: "600", marginBottom: "10px" }}>SEVERITY LEVEL</div>
+            <div style={{ fontSize: "20px", fontWeight: "800", fontFamily: "var(--font-mono)", color: severityColor, marginBottom: "10px" }}>
+              {isFP ? "BENIGN" : severity || "—"}
+            </div>
+            <div style={{ height: "6px", background: "rgba(30,30,30,0.8)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
+              <div style={{
+                height: "100%",
+                borderRadius: "3px",
+                transition: "width 0.5s ease",
+                width: severity === "LOW" ? "25%" : severity === "MEDIUM" ? "50%" : severity === "HIGH" ? "75%" : severity === "CRITICAL" ? "100%" : "0%",
+                background: severity === "LOW" ? "#3b82f6" : severity === "MEDIUM" ? "#f59e0b" : severity === "HIGH" ? "#f97316" : severity === "CRITICAL" ? "#ef4444" : "#333",
+              }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "8px", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
+              <span>LOW</span><span>MEDIUM</span><span>HIGH</span><span>CRITICAL</span>
+            </div>
+          </div>
+
+          {/* Confidence Ring */}
+          <div style={{
+            background: "rgba(15, 23, 42, 0.4)",
+            border: "1px solid var(--bg-border)",
+            borderRadius: "8px",
+            padding: "14px 16px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", letterSpacing: "0.1em", fontWeight: "600", marginBottom: "8px", alignSelf: "flex-start" }}>CONFIDENCE</div>
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="#1a2a1a" strokeWidth="6" />
+              <circle cx="40" cy="40" r="32" fill="none"
+                stroke={confidence >= 90 ? "#ef4444" : confidence >= 75 ? "#f97316" : confidence >= 50 ? "#facc15" : "#22c55e"}
+                strokeWidth="6" strokeLinecap="round"
+                strokeDasharray={`${(confidence || 0) * 2.01} 201`}
+                transform="rotate(-90 40 40)"
+                style={{ transition: "stroke-dasharray 0.8s ease" }}
+              />
+              <text x="40" y="44" textAnchor="middle" fill="#fff" fontSize="16" fontWeight="800" fontFamily="monospace">{confidence || 0}%</text>
+            </svg>
+          </div>
+
+          {/* Kill Chain Stage */}
+          <div style={{
+            background: "rgba(15, 23, 42, 0.4)",
+            border: "1px solid var(--bg-border)",
+            borderRadius: "8px",
+            padding: "14px 16px",
+          }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", letterSpacing: "0.1em", fontWeight: "600", marginBottom: "10px" }}>KILL CHAIN STAGE</div>
+            <div style={{ display: "flex", gap: "4px", alignItems: "flex-end", height: "40px" }}>
+              {["RECON", "ACCESS", "EXEC", "MOVE", "EXFIL"].map((stage, i) => {
+                const stageMap = { RECON: 0, INITIAL_ACCESS: 1, EXECUTION: 2, LATERAL_MOVEMENT: 3, EXFILTRATION: 4 };
+                const current = stageMap[incident.stage] ?? -1;
+                const active = i <= current;
+                return (
+                  <div key={stage} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                    <div style={{
+                      width: "100%", height: active ? `${20 + i * 5}px` : "12px",
+                      background: active ? (i === current ? "#00ff41" : "rgba(0,255,65,0.3)") : "#1a2a1a",
+                      borderRadius: "3px", transition: "all 0.5s ease",
+                      boxShadow: i === current ? "0 0 8px rgba(0,255,65,0.5)" : "none",
+                    }} />
+                    <span style={{ fontSize: "7px", color: active ? "#00ff41" : "var(--text-muted)", letterSpacing: "0.05em" }}>{stage}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Threat Badge */}
+          <div style={{
+            background: "rgba(15, 23, 42, 0.4)",
+            border: "1px solid var(--bg-border)",
+            borderRadius: "8px",
+            padding: "14px 16px",
+          }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", letterSpacing: "0.1em", fontWeight: "600", marginBottom: "10px" }}>ACTIVE THREAT</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "24px" }}>
+                {incident.threat_type?.includes("EXFIL") ? "📤" : incident.threat_type?.includes("LATERAL") ? "🔀" : incident.threat_type?.includes("MALWARE") ? "🦠" : incident.threat_type?.includes("BRUTE") ? "🔨" : incident.threat_type?.includes("SCAN") ? "🔍" : incident.threat_type?.includes("SQL") ? "💉" : incident.threat_type?.includes("XSS") ? "⚡" : incident.threat_type?.includes("HEADER") ? "🛡️" : "⚠️"}
+              </span>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", fontFamily: "var(--font-mono)" }}>{incident.threat_type?.replace(/_/g, " ") || "UNKNOWN"}</div>
+                <div style={{ fontSize: "10px", color: "var(--accent-cyan)", marginTop: "2px" }}>{incident.mitre_technique || "—"} · {incident.mitre_tactic?.replace(/_/g, " ") || "Unknown"}</div>
+              </div>
+            </div>
+            <span style={{
+              fontSize: "9px", padding: "3px 8px", borderRadius: "4px", fontWeight: "700", letterSpacing: "0.1em",
+              background: "rgba(0,255,65,0.1)", border: "1px solid rgba(0,255,65,0.3)", color: "#00ff41",
+            }}>
+              {incident.layers_involved?.join(" · ") || "NETWORK"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Area */}
       <div
+        ref={scrollRef}
         style={{
           flex: 1,
           padding: "24px",
           overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
         }}
       >
         {status === "idle" ? (
@@ -304,22 +461,37 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
             <div>{">"} Select a pipeline event to begin AI co-analysis.</div>
           </div>
         ) : (
-          <div
-            className={status === "streaming" ? "sam-cursor" : ""}
-            style={{
-              color: isFP ? "var(--sev-benign-text)" : "var(--text-primary)",
-              fontSize: "15px",
-              lineHeight: "1.7",
-              fontFamily: "var(--font-sans)",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {text}
-          </div>
+          uiMessages.map((msg, idx) => {
+            const isLast = idx === uiMessages.length - 1;
+            const isSamantha = msg.sender === 'samantha';
+            return (
+              <div
+                key={idx}
+                style={{
+                  alignSelf: isSamantha ? "flex-start" : "flex-end",
+                  background: isSamantha ? "transparent" : "rgba(20, 184, 166, 0.1)",
+                  border: isSamantha ? "none" : "1px solid rgba(20, 184, 166, 0.3)",
+                  borderRadius: isSamantha ? "0" : "8px",
+                  padding: isSamantha ? "0" : "12px 16px",
+                  maxWidth: isSamantha ? "100%" : "85%",
+                  color: isSamantha 
+                    ? (isFP ? "var(--sev-benign-text)" : "var(--text-primary)") 
+                    : "var(--accent-cyan)",
+                  fontSize: "14px",
+                  lineHeight: "1.7",
+                  fontFamily: "var(--font-sans)",
+                  whiteSpace: "pre-wrap",
+                }}
+                className={isSamantha && isLast && status === "streaming" ? "sam-cursor" : ""}
+              >
+                {msg.text}
+              </div>
+            );
+          })
         )}
         {status === "thinking" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "16px" }}>
-            <div style={{ color: "var(--accent-cyan)", fontSize: "12px", letterSpacing: "0.1em" }}>ANALYZING THREAT DATA</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+            <div style={{ color: "var(--accent-cyan)", fontSize: "12px", letterSpacing: "0.1em" }}>ANALYZING DATA</div>
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
@@ -335,6 +507,58 @@ export default function SamanthaStream({ incident, mode, onModeToggle }) {
           </div>
         )}
       </div>
+
+      {/* Chat Input */}
+      {status !== "idle" && (
+        <form 
+          onSubmit={handleSendMessage}
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            background: "rgba(0,0,0,0.2)",
+            display: "flex",
+            gap: "12px"
+          }}
+        >
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            disabled={status === "thinking" || status === "streaming"}
+            placeholder="Ask Samantha for deeper analysis..."
+            style={{
+              flex: 1,
+              background: "rgba(15, 23, 42, 0.5)",
+              border: "1px solid var(--bg-border)",
+              borderRadius: "6px",
+              padding: "10px 16px",
+              color: "#fff",
+              fontSize: "13px",
+              fontFamily: "var(--font-sans)",
+              outline: "none",
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!chatInput.trim() || status === "thinking" || status === "streaming"}
+            style={{
+              background: "var(--accent-cyan)",
+              color: "#000",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0 20px",
+              fontWeight: "700",
+              fontSize: "12px",
+              letterSpacing: "0.05em",
+              cursor: (!chatInput.trim() || status === "thinking" || status === "streaming") ? "not-allowed" : "pointer",
+              opacity: (!chatInput.trim() || status === "thinking" || status === "streaming") ? 0.5 : 1,
+              transition: "all 0.2s"
+            }}
+          >
+            SEND
+          </button>
+        </form>
+      )}
 
       {/* Footer */}
       <div

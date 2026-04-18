@@ -134,7 +134,7 @@ export default function DecisionPanel({ incident, attackId }) {
                   fontWeight: "600",
                 }}
               >
-                ANALYST NOTES
+                SOC ENGINEER NOTES
               </label>
               <textarea
                 value={notes}
